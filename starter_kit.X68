@@ -9,6 +9,14 @@
 *Validation values to be used, modify as needed
 *Add additional validation values as required
 *-------------------------------------------------------
+
+*-------------------------------------------------------
+*Title      : 
+*Written by :
+*Date       :
+*Descrition :
+*-------------------------------------------------------
+
 exit        EQU 0      used to exit assembly program
 min_feed    EQU 100    min feed requirement
 min_potions EQU 1      min number of potions
@@ -284,6 +292,7 @@ health:     ds.w    1
 score:      ds.w    1 reserve space for score
 
     end start
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
