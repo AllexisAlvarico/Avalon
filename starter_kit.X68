@@ -1,6 +1,18 @@
     org $1000
 
 *-------------------------------------------------------
+*Title      : Avalon
+*Written by : Allexis Alvarico
+*Date       : 21/01/19
+*Descrition : Text-base game project
+*-------------------------------------------------------
+*-------------------------------------------------------
+* Starting memory address for the programme $1000
+*-------------------------------------------------------
+    
+    org $1000
+
+*-------------------------------------------------------
 *Choose to be a Worker or a God 
 *https://www.avalon-rpg.com/
 *-------------------------------------------------------
@@ -9,23 +21,16 @@
 *Validation values to be used, modify as needed
 *Add additional validation values as required
 *-------------------------------------------------------
-
-*-------------------------------------------------------
-*Title      : 
-*Written by :
-*Date       :
-*Descrition :
-*-------------------------------------------------------
-
 exit        EQU 0      used to exit assembly program
-min_feed    EQU 100    min feed requirement
 min_potions EQU 1      min number of potions
 max_potions EQU 9      max number of potions
-min_weapons EQU 6      min weapons
+min_weapons EQU 1      min weapons
+max_weapons EQU 3      max weapons
 win_point   EQU 5      points accumilated on win
 lose_point  EQU 8      points deducted on a loss
 
-mine_loc    EQU 100    example for a hit
+mine_loc    EQU 100    used below for some simple collision detection using CMP
+                       * example for a hit
 
 
 *Start of Game
@@ -49,7 +54,6 @@ game:
           
 end:
     simhalt
-
 *-------------------------------------------------------
 *-------------------Welcome Subroutine------------------
 *-------------------------------------------------------
@@ -58,6 +62,10 @@ welcome:
     lea     welcome_msg,A1  assign message to address register A1
     move.b  #14,D0          move literal 14 to DO
     trap    #15             trap and interpret value in D0
+    
+    move.b  #4, D0          stops the continuing to the next msg 
+    trap    #15             trap and interpret value in D0
+    
     bsr     endl            branch to endl subroutine
     rts                     return from welcome: subroutine
 
@@ -66,7 +74,7 @@ welcome:
 *-------------------------------------------------------    
 input:
     bsr     potions         branch to potion input subroutine
-    bsr     weapons        branch to weaponss input subroutine
+    bsr     weapons         branch to weaponss input subroutine
     rts
 
 *-------------------------------------------------------
@@ -110,20 +118,6 @@ draw:
     trap    #15
     bsr     decorate
     rts
-*-------------------------------------------------------
-*------------------------Potions------------------------
-* Input the ingredients for each potion. Ingredients costs 
-* money. For an advanced mark you need to manage this 
-* resource
-*------------------------------------------------------- 
-feed:
-    bsr     endl
-    bsr     decorate
-    lea     potion_msg,A1
-    move.b  #14,D0
-    trap    #15
-    bsr     decorate
-    rts
 
 *-------------------------------------------------------
 *--------------------Potions Inventory---------------------
@@ -135,6 +129,8 @@ potions:
     lea     potions_msg,A1
     move.b  #14,D0
     trap    #15
+    move.b  #4,D0        stops the continuing to the next msg   
+    trap    #15          trap and interpret value in D0
     bsr     decorate
     rts
 
@@ -148,6 +144,8 @@ weapons:
     lea     weapons_msg,A1
     move.b  #14,D0
     trap    #15
+    move.b  #4,d0       shows the msg
+    trap    #15         trap and interpret value in D0
     bsr     decorate
     rts
 
@@ -160,6 +158,8 @@ gameplay:
     lea     gameplay_msg,A1
     move.b  #14,D0
     trap    #15
+    move.b  #4,D0       stops the continuing to the next msg 
+    trap    #15         trap and interpret value in D0
     bsr     decorate
     bsr     collision
     rts
@@ -266,13 +266,13 @@ endl:
 crlf:           dc.b    $0D,$0A,0
 welcome_msg:    dc.b    '************************************************************'
                 dc.b    $0D,$0A
-                dc.b    'Avalon: The Legend Lives'
+                dc.b    'Avalon: my lost phone'
                 dc.b    $0D,$0A
                 dc.b    '************************************************************'
                 dc.b    $0D,$0A,0
-potion_msg:     dc.b    'Feed load (each horse needs at least 100 units of feed)'
+potion_msg:     dc.b    'Potion ....'
                 dc.b    $0D,$0A
-                dc.b    'Enter feed load : ',0
+                dc.b    'Enter Potion : ',0
 potions_msg:    dc.b    'Number of potions : ',0
 weapons_msg:    dc.b    'Each quest need at least 2 Weapons'
                 dc.b    $0D,$0A
@@ -288,8 +288,8 @@ loop_msg:       dc.b    '.',0
 replay_msg:     dc.b    'Enter 0 to Quit any other number to replay : ',0
 hud_msg:        dc.b    'Score : ',0
 
-health:     ds.w    1
-score:      ds.w    1 reserve space for score
+health:     ds.w    1   Players Health
+score:      ds.w    1   Reserve space for score
 
     end start
 
