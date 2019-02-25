@@ -40,6 +40,7 @@ start:
 
 
     bsr     welcome    branch to the welcome subroutine
+    bsr     playerName
     bsr     input      branch to the input subroutine
     bsr     game       branch to the game subroutine
 *Game loop
@@ -68,8 +69,28 @@ welcome:
     
     bsr     endl            branch to endl subroutine
     rts                     return from welcome: subroutine
-
+    
 *-------------------------------------------------------
+*------------Player name and Company name---------------
+*-------------------------------------------------------
+playerName:
+    bsr clear_screen
+    lea     name_msg,A1 ; creates the message
+    move.b  #14,D0 ; display the message
+    trap    #15 ; trap and interpret value in D0
+    
+    move.b  #4,D0 ; stops the message from continuing to the next msg
+    trap    #15 ; trap and interpret value in D0
+    
+    move.b  #14,D0 ; display the message
+    trap    #15 ; trap and interpret value in D0
+    
+    move.b  #4,D0 ; stops the message from continuing to the next msg
+    trap    #15 ; trap and interpret value in D0
+    
+    rts
+
+*------------------------------------------------------
 *---------Gameplay Input Values Subroutine--------------
 *-------------------------------------------------------    
 input:
@@ -264,11 +285,37 @@ endl:
 *-------------------------------------------------------
 
 crlf:           dc.b    $0D,$0A,0
-welcome_msg:    dc.b    '************************************************************'
+welcome_msg:    dc.b    '************************************************************************'
                 dc.b    $0D,$0A
-                dc.b    'Avalon: my lost phone'
+                dc.b    'Welcome to PMC simulator'
                 dc.b    $0D,$0A
-                dc.b    '************************************************************'
+                dc.b    '************************************************************************'
+                dc.b    $0D,$0A
+                dc.b    'Where you lead and control a Private Military Company or for short PMCs.'
+                dc.b    $0D,$0A
+                dc.b    'Your job is to create havoc or create peace for a price.'
+                dc.b    $0D,$0A
+                dc.b    'Train men to their fullest potential to have the'
+                dc.b    $0D,$0A
+                dc.b    'strongest Private Military Company. Upgrade your weapons'
+                dc.b    $0D,$0A
+                dc.b    'and military might through technologies or buying equipments.'
+                dc.b    $0D,$0A
+                dc.b    'Earning funds for your PMC is by taking Agency missions'
+                dc.b    $0D,$0A
+                dc.b    'or by selling and arming rebels or terrorist cells in different countries.'
+                dc.b    $0D,$0A
+                dc.b    '************************************************************************'
+                dc.b    $0D,$0A
+                dc.b    'Press enter.........'
+                dc.b    $0D,$0A,0
+name_msg:       dc.b    'What is your name?'
+                dc.b    $0D,$0A 
+                dc.b    '',0
+                dc.b    $0D,$0A 
+                dc.b    'And your company name?'
+                dc.b    $0D,$0A
+                dc.b    '',0
                 dc.b    $0D,$0A,0
 potion_msg:     dc.b    'Potion ....'
                 dc.b    $0D,$0A
@@ -292,6 +339,7 @@ health:     ds.w    1   Players Health
 score:      ds.w    1   Reserve space for score
 
     end start
+
 
 *~Font name~Courier New~
 *~Font size~10~
