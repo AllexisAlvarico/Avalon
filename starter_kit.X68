@@ -1,7 +1,7 @@
     org $1000
 
 *-------------------------------------------------------
-*Title      : Avalon
+*Title      : Private Military Simulator
 *Written by : Allexis Alvarico
 *Date       : 21/01/19
 *Descrition : Text-base game project
@@ -13,11 +13,6 @@
     org $1000
 
 *-------------------------------------------------------
-*Choose to be a Worker or a God 
-*https://www.avalon-rpg.com/
-*-------------------------------------------------------
-
-*-------------------------------------------------------
 *Validation values to be used, modify as needed
 *Add additional validation values as required
 *-------------------------------------------------------
@@ -27,7 +22,10 @@ max_potions EQU 9      max number of potions
 min_weapons EQU 1      min weapons
 max_weapons EQU 3      max weapons
 win_point   EQU 5      points accumilated on win
-lose_point  EQU 8      points deducted on a loss
+lose_point  EQU 8      points deducted on a lossrea
+middle_east EQU 1      location play area   
+africa      EQU 2      location play area   
+south_america  EQU 3   location play area  
 
 mine_loc    EQU 100    used below for some simple collision detection using CMP
                        * example for a hit
@@ -55,6 +53,7 @@ game:
           
 end:
     simhalt
+NAME EQU $6000 ; stores the name to an adress
 *-------------------------------------------------------
 *-------------------Welcome Subroutine------------------
 *-------------------------------------------------------
@@ -69,33 +68,16 @@ welcome:
     
     bsr     endl            branch to endl subroutine
     rts                     return from welcome: subroutine
-    
-*-------------------------------------------------------
-*------------Player name and Company name---------------
-*-------------------------------------------------------
-playerName:
-    bsr clear_screen
-    lea     name_msg,A1 ; creates the message
-    move.b  #14,D0 ; display the message
-    trap    #15 ; trap and interpret value in D0
-    
-    move.b  #4,D0 ; stops the message from continuing to the next msg
-    trap    #15 ; trap and interpret value in D0
-    
-    move.b  #14,D0 ; display the message
-    trap    #15 ; trap and interpret value in D0
-    
-    move.b  #4,D0 ; stops the message from continuing to the next msg
-    trap    #15 ; trap and interpret value in D0
-    
-    rts
-
 *------------------------------------------------------
 *---------Gameplay Input Values Subroutine--------------
 *-------------------------------------------------------    
 input:
+    bsr     location        branch to location input subroutine
+    bsr clear_screen
     bsr     potions         branch to potion input subroutine
+    bsr clear_screen
     bsr     weapons         branch to weaponss input subroutine
+    bsr clear_screen
     rts
 
 *-------------------------------------------------------
@@ -139,13 +121,76 @@ draw:
     trap    #15
     bsr     decorate
     rts
+    
+*-------------------------------------------------------
+*--------------------Location---------------------------
+* where you staring place is
+*------------------------------------------------------- 
+location: 
+    bsr     clear_screen 
+    bsr     decorate
+    lea     location_msg,A1
+    move.b  #14,D0
+    trap    #15
+    move.b  #4,D0        stops the continuing to the next msg   
+    trap    #15          trap and interpret value in D0
+    
+    cmp     #middle_east,d1
+    beq     LocationA
+    cmp     #africa, d1
+    beq     africa
+    cmp     #south_america,d1
+    beq     south_america
+    bsr     location
+    
+    
 
+    rts
+
+*-------------------------------------------------------
+*--------------------Middle East---------------------
+* Middle East Actions
+*------------------------------------------------------- 
+
+LocationA:
+
+    bsr     decorate
+    lea     middle_east_msg,A1
+    move.b  #14,d0
+    trap    #15
+    move.b  #4,d0
+    trap    #15
+    bsr     decorate
+    bsr     clear_screen    clears the screen
+    rts
+*-------------------------------------------------------
+*------------ layer name and Company name---------------
+*-------------------------------------------------------
+playerName:
+    bsr     decorate
+    bsr clear_screen
+    lea     name_msg,A1 ; creates the message
+    move.w  #14,D0 ; display the message
+    trap    #15 ; trap and interpret value in D0
+    
+    lea     NAME,a1 
+    move.b  #2,D0 ; stops the message from continuing to the next msg
+    trap    #15 ; trap and interpret value in D0
+        
+    lea     company_msg,a1
+    move.w  #14,D0 ; display the message
+    trap    #15 ; trap and interpret value in Dsg,
+    
+    move.b  #4,D0 ; stops the message from continuing to the next msg
+    trap    #15 ; trap and interpret value in D0
+    bsr     decorate
+    rts
 *-------------------------------------------------------
 *--------------------Potions Inventory---------------------
 * Number of potions to be used in a Quest 
 *------------------------------------------------------- 
+    
 potions:
-    bsr     endl
     bsr     decorate
     lea     potions_msg,A1
     move.b  #14,D0
@@ -160,7 +205,6 @@ potions:
 * Number of weapons
 *-------------------------------------------------------   
 weapons:
-    bsr     endl
     bsr     decorate
     lea     weapons_msg,A1
     move.b  #14,D0
@@ -286,8 +330,24 @@ endl:
 
 crlf:           dc.b    $0D,$0A,0
 welcome_msg:    dc.b    '************************************************************************'
+                dc.b    $0D,$0A         
+                dc.b   ' _____        _               _          __  __  _  _  _  _      '  
+                dc.b    $0D,$0A               
+                dc.b   '|  __ \      (_)             | |        |  \/  |(_)| |(_)| |  '
                 dc.b    $0D,$0A
-                dc.b    'Welcome to PMC simulator'
+                dc.b   '| |__) |_ __  _ __   __ __ _ | |_  ___  | \  / | _ | | _ | |_   _ _  _ _  _   _ -'
+                dc.b    $0D,$0A
+                dc.b   '|  ___/|  __|| |\ \ / // _` || __|/ _ \ | |\/| || || || || __|/ _` || __|| | | |'
+                dc.b    $0D,$0A
+                dc.b   '| |    | |   | | \ V /| (_| || |_|  __/ | |  | || || || || |_| (_| || |  | |_| |'
+                dc.b    $0D,$0A
+                dc.b   '|_|    |_|   |_|  \_/  \__,_| \__|\___| |_|  |_||_||_||_| \__|\__,_||_|   \__, |'
+                dc.b    $0D,$0A 
+                dc.b    '                                                                          __/ /'
+                dc.b    $0D,$0A 
+                dc.b    '                                                                         |___/'
+                dc.b    $0D,$0A
+                dc.b    'Welcome to Private Military Simulator'
                 dc.b    $0D,$0A
                 dc.b    '************************************************************************'
                 dc.b    $0D,$0A
@@ -313,10 +373,16 @@ name_msg:       dc.b    'What is your name?'
                 dc.b    $0D,$0A 
                 dc.b    '',0
                 dc.b    $0D,$0A 
-                dc.b    'And your company name?'
+company_msg:    dc.b    'And your company name?'
                 dc.b    $0D,$0A
                 dc.b    '',0
                 dc.b    $0D,$0A,0
+location_msg:   dc.b    'Pick your starting point: 1. Middle east 2. Africa 3. South America'
+                dc.b    $0D,$0A  
+                dc.b    '',0
+                dc.b    $0D,$0A,0  
+middle_east_msg:     dc.b    'welcome to the land of desert where war in active'   
+                dc.b    $0D,$0A,0        
 potion_msg:     dc.b    'Potion ....'
                 dc.b    $0D,$0A
                 dc.b    'Enter Potion : ',0
@@ -339,6 +405,8 @@ health:     ds.w    1   Players Health
 score:      ds.w    1   Reserve space for score
 
     end start
+
+
 
 
 *~Font name~Courier New~
