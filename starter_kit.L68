@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 25/03/2019 00:30:50
+Created On: 25/03/2019 07:45:54
 
 00001000                             1      org $1000
 00001000                             2  
@@ -9,597 +9,980 @@ Created On: 25/03/2019 00:30:50
 00001000                             5  *Written by : Allexis Alvarico
 00001000                             6  *Date       : 21/01/19
 00001000                             7  *Descrition : Text-base game project
-00001000                             8  *-------------------------------------------------------
-00001000                             9  *-------------------------------------------------------
-00001000                            10  * Starting memory address for the programme $1000
+00001000                             8  *Bugs       : The consumption is not working as intended
+00001000                             9  *           : the selected item won't decrease and give
+00001000                            10  *           : its effects to the player
 00001000                            11  *-------------------------------------------------------
-00001000                            12      
-00001000                            13      org $1000
-00001000                            14  
-00001000                            15  *-------------------------------------------------------
-00001000                            16  *Validation values to be used, modify as needed
-00001000                            17  *Add additional validation values as required
+00001000                            12  *-------------------------------------------------------
+00001000                            13  * Starting memory address for the programme $1000
+00001000                            14  *-------------------------------------------------------
+00001000                            15      
+00001000                            16      org $1000
+00001000                            17  
 00001000                            18  *-------------------------------------------------------
-00001000  =00000000                 19  exit        EQU 0      used to exit assembly program
-00001000  =00000005                 20  win_point   EQU 5      points accumilated on win
-00001000  =00000008                 21  lose_point  EQU 8      points deducted on a lossrea
-00001000  =00000001                 22  Iraq        EQU 1      Iraq play area   
-00001000  =00000002                 23  Iran        EQU 2      Iran play area   
-00001000  =00000003                 24  Syria       EQU 3      Syria play area  
-00001000  =00000001                 25  Hospital    EQU 1      Medical shop
-00001000  =00000002                 26  Black_Market EQU 2     Weapon shop
-00001000  =00000003                 27  Contractors EQU 3      Mission shop
-00001000  =00000004                 28  leaveTown EQU 4        leave the town
-00001000                            29  
-00001000  =00000064                 30  mine_loc    EQU 100    used below for some simple collision detection using CMP
-00001000                            31                         * example for a hit
+00001000                            19  *Validation values to be used, modify as needed
+00001000                            20  *Add additional validation values as required
+00001000                            21  *-------------------------------------------------------
+00001000  =00000000                 22  exit        EQU 0      used to exit assembly program
+00001000  =00000005                 23  win_point   EQU 5      points accumilated on win
+00001000  =00000008                 24  lose_point  EQU 8      points deducted on a lossrea
+00001000  =00000001                 25  Iraq        EQU 1      Iraq play area   
+00001000  =00000002                 26  Iran        EQU 2      Iran play area   
+00001000  =00000003                 27  Syria       EQU 3      Syria play area  
+00001000  =00000001                 28  Hospital    EQU 1      Medical shop
+00001000  =00000002                 29  Black_Market EQU 2     Weapon shop
+00001000  =00000003                 30  Contractors EQU 3      Mission shop
+00001000  =00000004                 31  leaveTown EQU 4        leave the town
 00001000                            32  
-00001000                            33  
-00001000                            34  *Start of Game
-00001000                            35  start:
-00001000  11FC 0064 4000            36      move.b  #100,$4000 put score/health in memory location $4000
-00001006  47F8 4000                 37      lea     $4000,A3   assign address A3 to that memory location
-0000100A                            38  
-0000100A                            39  
-0000100A  6100 1FFE                 40      bsr     welcome    branch to the welcome subroutine
-0000100E  6100 2086                 41      bsr     playerName
-00001012  6100 2012                 42      bsr     input      branch to the input subroutine
-00001016  6100 1FE8                 43      bsr     game       branch to the game subroutine
-0000101A                            44  *Game loop
-00003000                            45      org     $3000      the rest of the program is to be located from 3000 onwards
-00003000                            46  
-00003000                            47  *-------------------------------------------------------
-00003000                            48  *-------------------Game Subroutine---------------------
-00003000                            49  *-------------------------------------------------------
-00003000                            50  game:
-00003000  6100 0036                 51      bsr     gameloop   branch to gameloop subroutine
-00003004  4E75                      52      rts                return from game: subroutine
-00003006                            53            
-00003006                            54  end:
-00003006  FFFF FFFF                 55      simhalt
-0000300A  =00006000                 56  NAME EQU $6000 ; stores the name to an adress
-0000300A  =00007000                 57  COMPANY_NAME EQU $7000 ; stores the player's company name
-0000300A                            58  *-------------------------------------------------------
-0000300A                            59  *-------------------Welcome Subroutine------------------
-0000300A                            60  *-------------------------------------------------------
-0000300A                            61  welcome:
-0000300A  6100 0350                 62      bsr     endl            branch to endl subroutine
-0000300E  43F9 00003375             63      lea     welcome_msg,A1  assign message to address register A1
-00003014  103C 000E                 64      move.b  #14,D0          move literal 14 to DO
-00003018  4E4F                      65      trap    #15             trap and interpret value in D0
-0000301A                            66      
-0000301A  103C 0004                 67      move.b  #4, D0          stops the continuing to the next msg 
-0000301E  4E4F                      68      trap    #15             trap and interpret value in D0
-00003020                            69      
-00003020  6100 033A                 70      bsr     endl            branch to endl subroutine
-00003024  4E75                      71      rts                     return from welcome: subroutine
-00003026                            72  *------------------------------------------------------
-00003026                            73  *---------Gameplay Input Values Subroutine--------------
-00003026                            74  *-------------------------------------------------------    
-00003026                            75  input:
-00003026  6100 00B4                 76      bsr     location        branch to location input subroutine
-0000302A  6100 0302                 77      bsr clear_screen
-0000302E  6100 0142                 78      bsr     Town         branch to potion input subroutine
-00003032  6100 02FA                 79      bsr clear_screen
-00003036                            80     ;bsr     weapons         branch to weaponss input subroutine
-00003036                            81     ; bsr clear_screen
-00003036  4E75                      82      rts
-00003038                            83  
-00003038                            84  *-------------------------------------------------------
-00003038                            85  *----------------Gameloop (main loop)-------------------
-00003038                            86  *------------------------------------------------------- 
-00003038                            87  gameloop:
-00003038  6100 0028                 88      bsr     update          branch to update game subroutine 
-0000303C  6100 02F0                 89      bsr     clear_screen    clears the screen         
-00003040  6100 003A                 90      bsr     draw            branch to draw screen subroutine
-00003044  6100 02E8                 91      bsr     clear_screen    clears the screen
-00003048  6100 0244                 92      bsr     gameplay        branch to gameplay subroutine
-0000304C  6100 02E0                 93      bsr     clear_screen    clears the screen
-00003050  6100 0260                 94      bsr     hud             branch to display HUD subroutine
-00003054  6100 02D8                 95      bsr     clear_screen    clears the screen
-00003058  6100 02E0                 96      bsr     replay          branch to replay game subroutine
-0000305C  6100 02D0                 97      bsr     clear_screen    clears the screen
-00003060  4E75                      98      rts                     return from gameloop: subroutine
-00003062                            99  
-00003062                           100  *-------------------------------------------------------
-00003062                           101  *----------------Update Quest Progress------------------
-00003062                           102  *  Complete Quest
-00003062                           103  *------------------------------------------------------- 
-00003062                           104  update:
-00003062  6100 02F8                105      bsr     endl            print a CR and LF
-00003066  6100 02A8                106      bsr     decorate        decorate with dots using a loop
-0000306A  43F9 00004EBE            107      lea     update_msg,A1   
-00003070  103C 000E                108      move.b  #14,D0
-00003074  4E4F                     109      trap    #15
-00003076  6100 0298                110      bsr     decorate
-0000307A  4E75                     111      rts
-0000307C                           112  *-------------------------------------------------------
-0000307C                           113  *-----------------Draw Quest Updates--------------------
-0000307C                           114  * Draw the game progress information, status regarding
-0000307C                           115  * quest
-0000307C                           116  *------------------------------------------------------- 
-0000307C                           117  draw:
-0000307C  6100 02DE                118      bsr     endl
-00003080  6100 028E                119      bsr     decorate
-00003084  43F9 00004ED0            120      lea     draw_msg,A1
-0000308A  103C 000E                121      move.b  #14,D0
-0000308E  4E4F                     122      trap    #15
-00003090  6100 027E                123      bsr     decorate
-00003094  4E75                     124      rts
-00003096                           125   
-00003096                           126  *-------------------------------------------------------
-00003096                           127  *------------ Player name and Company name---------------
-00003096                           128  *-------------------------------------------------------
-00003096                           129  playerName:
-00003096  6100 0296                130      bsr clear_screen
-0000309A  43F9 00003904            131      lea     name_msg,A1 ; creates the message
-000030A0  103C 000E                132      move.b  #14,D0 ; display the message
-000030A4  4E4F                     133      trap    #15 ; trap and interpret value in D0
-000030A6                           134      
-000030A6  43F8 6000                135      lea     NAME,a1 
-000030AA  103C 0002                136      move.b  #2,D0 ; stops the message from continuing to the next msg
-000030AE  4E4F                     137      trap    #15 ; trap and interpret value in D0
-000030B0                           138      
-000030B0  43F9 00003A53            139      lea     passport_msg,A1 ; creates the message
-000030B6  103C 000E                140      move.b  #14,D0 ; display the message
-000030BA  4E4F                     141      trap    #15 ; trap and interpret value in D0
-000030BC                           142      
-000030BC  43F9 00003B33            143      lea     company_msg,a1
-000030C2  103C 0002                144      move.b  #2,D0 ; display the message
-000030C6  4E4F                     145      trap    #15 ; trap and interpret value in Dsg,
-000030C8                           146  
-000030C8  43F9 00003E05            147      lea     certificate_msg,A1 ; creates the message
-000030CE  103C 000E                148      move.b  #14,D0 ; display the message
-000030D2  4E4F                     149      trap    #15 ; trap and interpret value in D0
-000030D4                           150      
-000030D4  103C 0004                151      move.b #4,d0
-000030D8  4E4F                     152      trap    #15
-000030DA                           153      
-000030DA                           154  
-000030DA                           155  
-000030DA  4E75                     156      rts
-000030DC                           157     
-000030DC                           158  *-------------------------------------------------------
-000030DC                           159  *--------------------Location---------------------------
-000030DC                           160  * where you staring place is
-000030DC                           161  *------------------------------------------------------- 
-000030DC                           162  location: 
-000030DC  6100 0250                163      bsr     clear_screen 
-000030E0  43F9 00004213            164      lea     location_msg,A1
-000030E6  103C 000E                165      move.b  #14,D0
-000030EA  4E4F                     166      trap    #15
-000030EC  103C 0004                167      move.b  #4,D0        stops the continuing to the next msg   
-000030F0  4E4F                     168      trap    #15          trap and interpret value in D0
-000030F2                           169      
-000030F2  B27C 0001                170      cmp     #Iraq,d1
-000030F6  6700 0016                171      beq     LocationA
-000030FA  B27C 0002                172      cmp     #Iran, d1
-000030FE  6700 002E                173      beq     LocationB
-00003102  B27C 0003                174      cmp     #Syria,d1
-00003106  6700 0046                175      beq     LocationC
-0000310A  61D0                     176      bsr     location
-0000310C  4E75                     177      rts
-0000310E                           178  
-0000310E                           179  *-------------------------------------------------------
-0000310E                           180  *--------------------Iraq-------------------------------
-0000310E                           181  * Iraq Actions
-0000310E                           182  *------------------------------------------------------- 
-0000310E                           183  
-0000310E                           184  LocationA:
-0000310E                           185  
-0000310E  6100 0200                186      bsr     decorate
-00003112  43F9 00004ABD            187      lea     Iraq_msg,A1
-00003118  103C 000E                188      move.b  #14,d0
-0000311C  4E4F                     189      trap    #15
-0000311E  103C 0004                190      move.b  #4,d0
-00003122  4E4F                     191      trap    #15
-00003124  6100 01EA                192      bsr     decorate
-00003128  6100 0204                193      bsr     clear_screen    clears the screen
-0000312C  4E75                     194      rts
-0000312E                           195  *-------------------------------------------------------
-0000312E                           196  *--------------------Iran-------------------------------
-0000312E                           197  * Iran Actions
-0000312E                           198  *------------------------------------------------------- 
-0000312E                           199  
-0000312E                           200  LocationB:
-0000312E                           201  
-0000312E  6100 01E0                202      bsr     decorate
-00003132  43F9 00004B6B            203      lea     Iran_msg,A1
-00003138  103C 000E                204      move.b  #14,d0
-0000313C  4E4F                     205      trap    #15
-0000313E  103C 0004                206      move.b  #4,d0
-00003142  4E4F                     207      trap    #15
-00003144  6100 01CA                208      bsr     decorate
-00003148  6100 01E4                209      bsr     clear_screen    clears the screen
-0000314C  4E75                     210      rts
-0000314E                           211  
-0000314E                           212  *-------------------------------------------------------
-0000314E                           213  *--------------------Syria-----------------------------
-0000314E                           214  * Syria Actions
-0000314E                           215  *------------------------------------------------------- 
-0000314E                           216  
-0000314E                           217  LocationC
-0000314E                           218  
-0000314E  6100 01C0                219      bsr     decorate
-00003152  43F9 00004B93            220      lea     Syria_msg,A1
-00003158  103C 000E                221      move.b  #14,d0
-0000315C  4E4F                     222      trap    #15
-0000315E  103C 0004                223      move.b  #4,d0
-00003162  4E4F                     224      trap    #15
-00003164  6100 01AA                225      bsr     decorate
-00003168  6100 01C4                226      bsr     clear_screen    clears the screen
-0000316C  6100 0004                227      bsr     town
-00003170  4E75                     228      rts
-00003172                           229  *-------------------------------------------------------
-00003172                           230  *--------------------Town-----------------------------
-00003172                           231  * town Actions
-00003172                           232  *------------------------------------------------------- 
-00003172                           233  
-00003172                           234  Town:
-00003172                           235  
-00003172  6100 019C                236      bsr     decorate
-00003176  43F9 00004C16            237      lea     town_msg,A1
-0000317C  103C 000E                238      move.b  #14,d0
-00003180  4E4F                     239      trap    #15
-00003182  103C 0004                240      move.b  #4,d0
-00003186  4E4F                     241      trap    #15
-00003188                           242      
-00003188  B27C 0001                243      cmp     #Hospital,d1
-0000318C  6700 0026                244      beq     Shop1
-00003190  B27C 0002                245      cmp     #Black_Market, d1
-00003194  6700 0056                246      beq     Shop2
-00003198  B27C 0003                247      cmp     #Contractors,d1
-0000319C  6700 0088                248      beq     Shop3
-000031A0  B27C 0004                249      cmp     #leaveTown,d1
-000031A4  6700 00BA                250      beq     Leave
-000031A8  6100 0166                251      bsr     decorate
-000031AC  6100 0180                252      bsr     clear_screen    clears the screen
-000031B0  61C0                     253      bsr     town
-000031B2  4E75                     254      rts
-000031B4                           255      
-000031B4                           256  *-------------------------------------------------------
-000031B4                           257  *--------------------Hospital-----------------------------
-000031B4                           258  * Hospital Actions
-000031B4                           259  *------------------------------------------------------- 
-000031B4                           260  
-000031B4                           261  Shop1:
-000031B4  6100 0178                262      bsr     clear_screen 
-000031B8  6100 0156                263      bsr     decorate
-000031BC  43F9 00004CA6            264      lea     Hospital_msg,A1
-000031C2  6100 014C                265      bsr     decorate
-000031C6  103C 000E                266      move.b  #14,d0
-000031CA  4E4F                     267      trap    #15
-000031CC  43F9 00004CF4            268      lea     medical_items_msg,a1
-000031D2  103C 000E                269      move.b  #14,d0
-000031D6  4E4F                     270      trap    #15
-000031D8  103C 0004                271      move.b  #4,d0
-000031DC  4E4F                     272      trap    #15
-000031DE  6100 0130                273      bsr     decorate
-000031E2                           274      
-000031E2  B27C 0004                275      cmp     #4,d1
-000031E6  678A                     276      beq     Town
-000031E8  6100 0144                277      bsr     clear_screen    clears the screen
-000031EC                           278  *-------------------------------------------------------
-000031EC                           279  *--------------------Black Market-----------------------------
-000031EC                           280  * Black Market Actions
-000031EC                           281  *------------------------------------------------------- 
-000031EC                           282  
-000031EC                           283  Shop2:
-000031EC  6100 0140                284      bsr     clear_screen 
-000031F0  6100 011E                285      bsr     decorate
-000031F4  43F9 00004D55            286      lea     BlackMarket_msg,A1
-000031FA  6100 0114                287      bsr     decorate
-000031FE  103C 000E                288      move.b  #14,d0
-00003202  4E4F                     289      trap    #15
-00003204  43F9 00004D91            290      lea     weapon_items_msg,a1
-0000320A  103C 000E                291      move.b  #14,d0
-0000320E  4E4F                     292      trap    #15
-00003210  103C 0004                293      move.b  #4,d0
-00003214  4E4F                     294      trap    #15
-00003216                           295      
-00003216  B27C 0004                296      cmp     #4,d1
-0000321A  6700 FF56                297      beq     Town
-0000321E                           298  
-0000321E  6100 00F0                299      bsr     decorate
-00003222  6100 010A                300      bsr     clear_screen    clears the screen
-00003226                           301      
-00003226                           302  *-------------------------------------------------------
-00003226                           303  *--------------------Contractors office-----------------
-00003226                           304  * Contractors office Actions
-00003226                           305  *------------------------------------------------------- 
-00003226                           306  
-00003226                           307  Shop3:
-00003226  6100 0106                308      bsr     clear_screen 
-0000322A  6100 00E4                309      bsr     decorate
-0000322E  43F9 00004DFB            310      lea     contractors_msg,A1
-00003234  6100 00DA                311      bsr     decorate
-00003238  103C 000E                312      move.b  #14,d0
-0000323C  4E4F                     313      trap    #15
-0000323E  43F9 00004E43            314      lea     contractors_mission_msg,a1
-00003244  103C 000E                315      move.b  #14,d0
-00003248  4E4F                     316      trap    #15
-0000324A  103C 0004                317      move.b  #4,d0
-0000324E  4E4F                     318      trap    #15
-00003250                           319      
-00003250  B27C 0002                320      cmp     #2,d1
-00003254  6700 FF1C                321      beq     Town
-00003258                           322  
-00003258  6100 00B6                323      bsr     decorate
-0000325C  6100 00D0                324      bsr     clear_screen    clears the screen
-00003260                           325  
-00003260                           326  *-------------------------------------------------------
-00003260                           327  *--------------------Leave the town-----------------
-00003260                           328  *Leave town Actions
-00003260                           329  *------------------------------------------------------- 
-00003260                           330  
-00003260                           331  Leave:
-00003260  6100 00CC                332      bsr     clear_screen 
-00003264  6100 00AA                333      bsr     decorate
-00003268  43F9 00004E7B            334      lea     action_msg,A1
-0000326E  6100 00A0                335      bsr     decorate
-00003272  103C 000E                336      move.b  #14,d0
-00003276  4E4F                     337      trap    #15
-00003278  103C 0004                338      move.b  #4,d0
-0000327C  4E4F                     339      trap    #15
-0000327E                           340      
-0000327E  B27C 0002                341      cmp     #2,d1
-00003282  6700 FEEE                342      beq     Town
-00003286                           343  
-00003286  6100 0088                344      bsr     decorate
-0000328A  6100 00A2                345      bsr     clear_screen    clears the screen
-0000328E                           346      
-0000328E                           347      
-0000328E                           348  
-0000328E                           349  *-------------------------------------------------------
-0000328E                           350  *---Game Play (Quest Progress)--------------------------
-0000328E                           351  *------------------------------------------------------- 
-0000328E                           352  gameplay:
-0000328E  6100 00CC                353      bsr     endl
-00003292  6100 007C                354      bsr     decorate
-00003296  43F9 00004EAF            355      lea     gameplay_msg,A1
-0000329C  103C 000E                356      move.b  #14,D0
-000032A0  4E4F                     357      trap    #15
-000032A2  103C 0004                358      move.b  #4,D0       stops the continuing to the next msg 
-000032A6  4E4F                     359      trap    #15         trap and interpret value in D0
-000032A8  6100 0066                360      bsr     decorate
-000032AC  6100 0026                361      bsr     collision
-000032B0  4E75                     362      rts
-000032B2                           363  
-000032B2                           364  *-------------------------------------------------------
-000032B2                           365  *-----------------Heads Up Display (Score)--------------
-000032B2                           366  * Retrieves the score from memory location
-000032B2                           367  *-------------------------------------------------------   
-000032B2                           368  hud:
-000032B2                           369  
-000032B2  6100 00A8                370      bsr     endl
-000032B6  6100 0058                371      bsr     decorate
-000032BA  43F9 00004F1C            372      lea     hud_msg,A1
-000032C0  103C 000E                373      move.b  #14,D0
-000032C4  4E4F                     374      trap    #15
-000032C6  1213                     375      move.b  (A3),D1     retrieve the value A3 point to and move to D1
-000032C8  103C 0003                376      move.b  #3,D0       move literal 3 to D0
-000032CC  4E4F                     377      trap    #15         intrepret value in D0, which 3 which displays D1
-000032CE  6100 0040                378      bsr     decorate
-000032D2  4E75                     379      rts
-000032D4                           380  
-000032D4                           381  *-------------------------------------------------------
-000032D4                           382  *-----------------------Being Attacked------------------
-000032D4                           383  * This could be used for collision detection
-000032D4                           384  *-------------------------------------------------------
-000032D4                           385  collision:
-000032D4  123C 0064                386      move.b  #mine_loc,D1
-000032D8  B27C 0064                387      cmp     #100,D1 is( x == 100)?
-000032DC  6600 0010                388      bne     collision_miss if x is equal to 100, then hit
-000032E0                           389  collision_hit:
-000032E0                           390      *hit
-000032E0  43F9 00004EDE            391      lea     hit_msg,A1
-000032E6  303C 000E                392      move    #14,D0
-000032EA  4E4F                     393      trap    #15
-000032EC  4E75                     394      rts
-000032EE                           395      
-000032EE                           396  collision_miss:
-000032EE                           397      *miss
-000032EE  43F9 00004EE6            398      lea     miss_msg,A1
-000032F4  303C 000E                399      move    #14,D0
-000032F8  4E4F                     400      trap    #15
-000032FA  4E75                     401      rts
-000032FC                           402  
-000032FC                           403  *-------------------------------------------------------
-000032FC                           404  *--------------------------Loop-------------------------
-000032FC                           405  *-------------------------------------------------------
-000032FC                           406  loop:
-000032FC  163C 0005                407      move.b  #5, D3 loop counter D3=5
-00003300                           408  next:
-00003300  43F9 00004EEC            409      lea     loop_msg,A1
-00003306  103C 000E                410      move.b  #14,D0
-0000330A  4E4F                     411      trap    #15
-0000330C  5343                     412      sub     #1,D3   decrement loop counter
-0000330E  66F0                     413      bne     next    repeat until D0=0
-00003310                           414  
-00003310                           415  *-------------------------------------------------------
-00003310                           416  *------------------Screen Decoration--------------------
-00003310                           417  *-------------------------------------------------------
-00003310                           418  decorate:
-00003310  163C 003C                419      move.b  #60, D3
-00003314  6100 0046                420      bsr     endl
-00003318                           421  out:
-00003318  43F9 00004EEC            422      lea     loop_msg,A1
-0000331E  103C 000E                423      move.b  #14,D0
-00003322  4E4F                     424      trap    #15
-00003324  5343                     425      sub     #1,D3   decrement loop counter
-00003326  66F0                     426      bne     out     repeat until D0=0
-00003328  6100 0032                427      bsr     endl
-0000332C  4E75                     428      rts
-0000332E                           429      
-0000332E                           430  clear_screen: 
-0000332E  103C 000B                431      move.b  #11,D0      clear screen
-00003332  323C FF00                432      move.w  #$ff00,D1
-00003336  4E4F                     433      trap    #15
-00003338  4E75                     434      rts
-0000333A                           435  *-------------------------------------------------------
-0000333A                           436  *------------------------Replay-------------------------
-0000333A                           437  *-------------------------------------------------------
-0000333A                           438  replay:
-0000333A  6100 0020                439      bsr     endl
-0000333E  43F9 00004EEE            440      lea     replay_msg,A1
-00003344  103C 000E                441      move.b  #14,D0
-00003348  4E4F                     442      trap    #15
-0000334A                           443      
-0000334A  103C 0004                444      move.b  #4,D0
-0000334E  4E4F                     445      trap    #15
-00003350                           446  
-00003350  B27C 0000                447      cmp     #exit,D1
-00003354  6700 FCB0                448      beq     end         if SR Z register contains 1 beq => Branch Equals
-00003358  6100 FCDE                449      bsr     gameloop
-0000335C                           450  
-0000335C                           451  endl:
-0000335C  48E7 8040                452      movem.l D0/A1,-(A7)
-00003360  303C 000E                453      move    #14,D0
-00003364  43F9 00003372            454      lea     crlf,A1
-0000336A  4E4F                     455      trap    #15
-0000336C  4CDF 0201                456      movem.l (A7)+,D0/A1
-00003370  4E75                     457      rts
-00003372                           458      
-00003372                           459  *-------------------------------------------------------
-00003372                           460  *-------------------Data Delarations--------------------
-00003372                           461  *-------------------------------------------------------
-00003372                           462  
-00003372= 0D 0A 00                 463  crlf:           dc.b    $0D,$0A,0
-00003375= 2A 2A 2A 2A 2A 2A ...    464  welcome_msg:    dc.b   '********************************************************************************',$0D,$0A       
-000033C7= 20 5F 5F 5F 5F 5F ...    465                  dc.b   ' _____        _               _          __  __  _  _  _  _      '  ,$0D,$0A
-0000340A= 7C 20 20 5F 5F 20 ...    466                  dc.b   '|  __ \      (_)             | |        |  \/  |(_)| |(_)| |  ',$0D,$0A
-0000344A= 7C 20 7C 5F 5F 29 ...    467                  dc.b   '| |__) |_ __  _ __   __ __ _ | |_  ___  | \  / | _ | | _ | |_   _ _  _ _  _   _ -',$0D,$0A
-0000349D= 7C 20 20 5F 5F 5F ...    468                  dc.b   '|  ___/|  __|| |\ \ / // _` || __|/ _ \ | |\/| || || || || __|/ _` || __|| | | |',$0D,$0A
-000034EF= 7C 20 7C 20 20 20 ...    469                  dc.b   '| |    | |   | | \ V /| (_| || |_|  __/ | |  | || || || || |_| (_| || |  | |_| |',$0D,$0A
-00003541= 7C 5F 7C 20 20 20 ...    470                  dc.b   '|_|    |_|   |_|  \_/  \__,_| \__|\___| |_|  |_||_||_||_| \__|\__,_||_|   \__, |',$0D,$0A
-00003593= 20 20 20 20 20 20 ...    471                  dc.b    '                                                                          __/ /',$0D,$0A
-000035E4= 20 20 20 20 20 20 ...    472                  dc.b    '                                                                         |___/',$0D,$0A
-00003634= 57 65 6C 63 6F 6D ...    473                  dc.b    'Welcome to Private Military Simulator',$0D,$0A
-0000365B= 2A 2A 2A 2A 2A 2A ...    474                  dc.b    '********************************************************************************',$0D,$0A
-000036AD= 57 68 65 72 65 20 ...    475                  dc.b    'Where you lead and control a Private Military Company or for short PMCs.',$0D,$0A
-000036F7= 59 6F 75 72 20 6A ...    476                  dc.b    'Your job is to create havoc or create peace for a price.',$0D,$0A
-00003731= 54 72 61 69 6E 20 ...    477                  dc.b    'Train men to their fullest potential to have the',$0D,$0A
-00003763= 73 74 72 6F 6E 67 ...    478                  dc.b    'strongest Private Military Company. Upgrade your weapons',$0D,$0A
-0000379D= 61 6E 64 20 6D 69 ...    479                  dc.b    'and military might through technologies or buying equipments.',$0D,$0A
-000037DC= 45 61 72 6E 69 6E ...    480                  dc.b    'Earning funds for your PMC is by taking Agency missions',$0D,$0A
-00003815= 6F 72 20 62 79 20 ...    481                  dc.b    'or by selling and arming rebels or terrorist cells in different countries.',$0D,$0A
-00003861= 2A 2A 2A 2A 2A 2A ...    482                  dc.b    '********************************************************************************',$0D,$0A
-000038B3= 20 20 20 20 20 20 ...    483                  dc.b    '                                  Press enter                                   ',0
-00003904= 2A 2A 2A 2A 2A 2A ...    484  name_msg:       dc.b    '********************************************************************************',$0D,$0A 
-00003956= 54 79 70 65 3A 20 ...    485                  dc.b    'Type:    Country code:     Citizen of XXXXXXX XX XXXXX         Passport No:     ',$0D,$0A 
-000039A8= 58 20 20 20 20 20 ...    486                  dc.b    'X        XXX                                                   XX329546'
-000039EF= 20 20 20 20 20 20 ...    487                  dc.b    '                                Passport Details                             ',$0D,$0A,$0D,$0A
-00003A40= 47 69 76 65 6E 20 ...    488                  dc.b    'Given First Name: ',0
-00003A53= 47 69 76 65 6E 20 ...    489  passport_msg:   dc.b    'Given Surname: XXXXXXXX',$0D,$0A
-00003A6C= 44 61 74 65 20 6F ...    490                  dc.b    'Date of Birth: XX/XX/XXXX      Record No: XXXXXXXXXXX',$0D,$0A 
-00003AA3= 4E 61 74 69 6F 6E ...    491                  dc.b    'Nationality: XXXXXXX',$0D,$0A 
-00003AB9= 53 45 58 20 4D 2F ...    492                  dc.b    'SEX M/F: X     Place of Birth: XXXXXX,XXXXX',$0D,$0A 
-00003AE6= 44 61 74 65 20 69 ...    493                  dc.b    'Date issue: XX/XX/XXXX         Authority: XXXXX',$0D,$0A
-00003B17= 44 61 74 65 20 6F ...    494                  dc.b    'Date of expiry: XX/XX/XXXX',$0D,$0A 
-00003B33= 2A 2A 2A 2A 2A 2A ...    495  company_msg:    dc.b   '********************************************************************************',$0D,$0A 
-00003B85= 20 20 20 20 20 20 ...    496                  dc.b    '                          XXXXXXXXXXXXXXXXXXXXXX                        ',$0D,$0A
-00003BCF= 20 20 20 20 20 20 ...    497                  dc.b    '                  Voluntary certification system <<XXXXXXXXX>>          ',$0D,$0A
-00003C19= 20 20 69 73 20 72 ...    498                  dc.b    '  is registered with the federal agency of technical regulation and metrology',$0D,$0A 
-00003C68= 20 20 43 65 6E 74 ...    499                  dc.b    '  Central certification body LLC <<Independent Certificaion Center <<Alliance>>',$0D,$0A
-00003CB9= 20 20 20 20 20 20 ...    500                  dc.b    '         Address: X XXXXXXXXXXX  XX, XXXXXXX, 5X, XXXXXXXX.13208,XXXXXXX       ',$0D,$0A
-00003D0A= 20 20 20 20 20 20 ...    501                  dc.b    '                           CONFORMANCE CERTIFICATE                      ',$0D,$0A
-00003D54= 20 20 20 20 20 20 ...    502                  dc.b    '                         NO SMK.XX/XX.XX - 00172/00554                  ',$0D,$0A
-00003D9E= 20 20 20 20 20 20 ...    503                  dc.b    '                               Granted to:                              ',$0D,$0A
-00003DE8= 20 20 20 20 20 20 ...    504                  dc.b    '                            ',0
-00003E05= 20 20 20 20 20 20 ...    505  certificate_msg: dc.b   '            56,XXXXXXX Rd, Third Floor, XXXX City,XXXXXX, XXXXXXXXX     ',$0D,$0A             
-00003E4F= 20 20 20 20 20 20 ...    506                  dc.b    '                           Register Number 82,630                       ',$0D,$0A 
-00003E99= 20 20 20 20 20 20 ...    507                  dc.b    '                        THIS CERTIFICATE CERTIFIES THAT:                ',$0D,$0A
-00003EE3= 20 20 20 20 20 20 ...    508                  dc.b    '                         THE QUALITY MANAGEMENT SYSTEM                  ',$0D,$0A
-00003F2D= 20 20 20 20 20 20 ...    509                  dc.b    '                                 as applied to                                       ',$0D,$0A
-00003F84= 6D 61 72 69 74 69 ...    510                  dc.b    'maritime security, including arm security of the merchant fleet and escorting   ',$0D,$0A
-00003FD6= 70 72 6F 74 65 63 ...    511                  dc.b    'protection of sea ports, protection of sea platforms and pipelines, installation',$0D,$0A
-00004028= 6F 66 20 73 70 65 ...    512                  dc.b    'of special equipment on vessels boards in the condition of piracy activity, land',$0D,$0A                                                                    ',$0D,$0A
-0000407A= 73 65 63 75 72 69 ...    513                  dc.b    'security, including armed guaeding of stationary objects, oil and gas pipelines,',$0D,$0A
-000040CC= 70 68 79 73 69 63 ...    514                  dc.b    'physical persons, cargoes convoy; demining; consultion services and audit in    ',$0D,$0A
-0000411E= 73 65 63 75 72 69 ...    515                  dc.b    'security affairs; security training of personnel for land and sea operations.   ',$0D,$0A
-00004170= 2A 2A 2A 2A 2A 2A ...    516                  dc.b    '********************************************************************************',$0d,$0A
-000041C2= 20 20 20 20 20 20 ...    517                  dc.b    '                                 Press Enter                                    ',0
-00004213= 26 2C 2C 2C 2C 2C ...    518  location_msg:   dc.b    '&,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,&',$0d,$0A
-00004265= 25 2A 2E 2E 2E 2E ...    519                  dc.b    '%*.....#.  **                  ,      ...,,..  ,. .*         ..        (       %',$0d,$0A
-000042B7= 25 2E 2A 2E 2A 28 ...    520                  dc.b    '%.*.*(...........,.    ..               (...,(         (                    *( %',$0d,$0A
-00004309= 25 2E 2E 2E 2E 2E ...    521                  dc.b    '%........(...* ,((.  3.Syria     (                      ((.            (    .  %',$0d,$0A
-0000435B= 25 2A 2E 2E 2E 2E ...    522                  dc.b    '%*................ (             ,           2.Iran                   (      . %',$0d,$0A
-000043AD= 25 20 23 2E 2E 2E ...    523                  dc.b    '% #............./%    #                                              #         %',$0d,$0A
-000043FF= 25 20 20 20 20 20 ...    524                  dc.b    '%     ## , %...#&          1.Iraq /                     ,          *         . %',$0d,$0A
-00004451= 25 20 20 20 20 20 ...    525                  dc.b    '%          .    *                                                /          (  %',$0d,$0A
-000044A3= 25 20 20 20 20 20 ...    526                  dc.b    '%              (  (,        .(      *                          *.          *   %',$0d,$0A
-000044F5= 25 20 20 20 20 20 ...    527                  dc.b    '%           * #               .,,.. *...*                 ,             /.     %',$0d,$0A
-00004547= 25 20 20 20 20 20 ...    528                  dc.b    '%            ...                     ....#                  *           ,      %',$0d,$0A
-00004599= 25 20 20 20 20 20 ...    529                  dc.b    '%            (...                     #.....     ,(         (                  %',$0d,$0A
-000045EB= 25 20 20 20 20 20 ...    530                  dc.b    '%             *...                      ##.,,,*..*,.          ((/*(..    .*    %',$0d,$0A
-0000463D= 25 20 20 20 20 20 ...    531                  dc.b    '%              ...#                     ( ....** ,#**...,............*/        %',$0d,$0A
-0000468F= 25 20 2E 28 2E 20 ...    532                  dc.b    '% .(.          ......                     .#        .(*/*........(......(    , %',$0d,$0A
-000046E1= 25 20 20 20 20 20 ...    533                  dc.b    '%          ,     ....                      ,(,  ,       #..*//./..........% #. %',$0d,$0A
-00004733= 25 20 20 20 20 20 ...    534                  dc.b    '%                /...                            *     *.,..............*(*... %',$0d,$0A
-00004785= 25 20 20 20 20 20 ...    535                  dc.b    '%                (*...#                              *,..(*(*.....*........... %',$0d,$0A
-000047D7= 25 20 20 20 20 20 ...    536                  dc.b    '%                #......                     /       (...*........*........*.. %',$0d,$0A
-00004829= 25 20 20 20 20 20 ...    537                  dc.b    '%                 */.*..(            ./            (.................**,**.... %',$0d,$0A
-0000487B= 25 20 20 20 20 20 ...    538                  dc.b    '%              .    .(.... *( (             .    ...........................*. %',$0d,$0A
-000048CD= 25 20 20 20 20 20 ...    539                  dc.b    '%                   *@....,                 .......................#(*........ %',$0d,$0A
-0000491F= 25 20 20 20 20 20 ...    540                  dc.b    '%             (.* (%* .,..(             ,%(**.............(................... %',$0d,$0A
-00004971= 25 20 20 20 20 20 ...    541                  dc.b    '%            (         , ..        #*.....................*.........         ( %',$0d,$0A
-000049C3= 25 20 20 20 20 20 ...    542                  dc.b    '%                        ( .*...,..,,.........#(.*.................. .,,    ,( %',$0d,$0A
-00004A15= 25 2C 2C 2C 2C 2C ...    543                  dc.b    '%,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,%',$0d,$0A
-00004A67= 20 20 20 20 20 20 ...    544                  dc.b    '                   Pick your starting point: 1. Iraq 2. Iran 3. Syria           ',$0d,$0A
-00004AB9= 00                       545                  dc.b    '',0
-00004ABA= 0D 0A 00                 546                  dc.b    $0D,$0A,0  
-00004ABD= 57 65 6C 63 6F 6D ...    547  Iraq_msg:       dc.b    'Welcome to the to the nation of Iraq,'   
-00004AE2= 0D 0A 00                 548                  dc.b    $0D,$0A,0  
-00004AE5= 41 66 74 65 72 20 ...    549                  dc.b    'After you landed in the aitport you when to the city/town centre'
-00004B25= 0D 0A 00                 550                  dc.b    $0D,$0A,0  
-00004B28= 41 66 74 65 72 20 ...    551                  dc.b    'After you landed in the aitport you when to the city/town centre'
-00004B68= 0D 0A 00                 552                  dc.b    $0D,$0A,0  
-00004B6B= 57 65 6C 63 6F 6D ...    553  Iran_msg:       dc.b    'Welcome to the to the nation of Iran.'
-00004B90= 0D 0A 00                 554                  dc.b    $0D,$0A,0    
-00004B93= 77 65 6C 63 6F 6D ...    555  Syria_msg:      dc.b    'welcome to thee nation of syria where civil war is ongoing.'  
-00004BCE= 0D 0A 00                 556                  dc.b    $0D,$0A,0        
-00004BD1= 41 66 74 65 72 20 ...    557                  dc.b    'After you landed in the air strip you when to the city/town centre'
-00004C13= 0D 0A 00                 558                  dc.b    $0D,$0A,0   
-00004C16= 57 65 6C 63 6F 6D ...    559  town_msg:       dc.b    'Welcome to the city/town centre.'
-00004C36= 0D 0A                    560                  dc.b    $0D,$0A
-00004C38= 41 63 74 69 6F 6E ...    561                  dc.b    'Actions: 1. Visit the hospital, 2. Visit the black market'
-00004C71= 0D 0A                    562                  dc.b    $0D,$0A
-00004C73= 33 2E 20 56 69 73 ...    563                  dc.b    '3. Visit the contractors office or 4. Leave town'
-00004CA3= 0D 0A 00                 564                  dc.b    $0D,$0A,0
-00004CA6= 59 6F 75 20 68 61 ...    565  hospital_msg    dc.b    'You have entered the hospital and you see an abundance'
-00004CDC= 0D 0A 00                 566                  dc.b    $0D,$0A,0
-00004CDF= 6F 66 20 6D 65 64 ...    567                  dc.b    'of medical supplies'
-00004CF2= 0D 0A                    568                  dc.b    $0D,$0A    
-00004CF4= 54 68 65 20 68 6F ...    569  medical_items_msg dc.b   'The hospital  is selling: 1.Bandages($40), 2.Pills($60)'
-00004D2B= 0D 0A                    570                  dc.b    $0D,$0A 
-00004D2D= 33 2E 4D 65 64 6B ...    571                  dc.b    '3.Medkits($100) 4. leave the hospital'       
-00004D52= 0D 0A 00                 572                  dc.b    $0D,$0A,0   
-00004D55= 59 6F 75 20 68 61 ...    573  BlackMarket_msg dc.b    'You have entered the Black Market and see alot of weapons'
-00004D8E= 0D 0A 00                 574                  dc.b    $0D,$0A,0 
-00004D91= 54 68 65 20 42 6C ...    575  weapon_items_msg dc.b    'The Black Market is selling: 1.AK47s($50), 2.M4($120)'
-00004DC6= 0D 0A                    576                  dc.b    $0D,$0A
-00004DC8= 33 2E 53 6E 69 70 ...    577                  dc.b    '3.Sniper rife($100) or 4. leave the black market'  
-00004DF8= 0D 0A 00                 578                  dc.b    $0D,$0A,0
-00004DFB= 59 6F 75 20 65 6E ...    579  contractors_msg dc.b    'You enter the contractors office and see brunch of paper'
-00004E33= 77 6F 72 6B 20 6F ...    580                  dc.b    'work on the desk'
-00004E43= 4D 69 73 73 69 6F ...    581  contractors_mission_msg dc.b 'Missions 1.Hunt Terrorist outskirt of town reward $100'
-00004E79= 0D 0A                    582                  dc.b    $0D,$0A
-00004E7B= 31 2E 4D 6F 76 65 ...    583  action_msg      dc.b    '1.Move out or go back to town.'
-00004E99= 0D 0A                    584                  dc.b    $0D,$0A
-00004E9B= 32 2E 20 6C 65 61 ...    585                  dc.b    '2. leave the office',0
-00004EAF= 41 64 64 20 47 61 ...    586  gameplay_msg:   dc.b    'Add Gameplay !',0
-00004EBE= 55 70 64 61 74 65 ...    587  update_msg:     dc.b    'Update Gameplay !',0
-00004ED0= 44 72 61 77 20 53 ...    588  draw_msg:       dc.b    'Draw Screen !',0
-00004EDE= 53 74 72 69 6B 65 ...    589  hit_msg:        dc.b    'Strike!',0
-00004EE6= 4D 69 73 73 21 00        590  miss_msg:       dc.b    'Miss!',0
-00004EEC= 2E 00                    591  loop_msg:       dc.b    '.',0
-00004EEE= 45 6E 74 65 72 20 ...    592  replay_msg:     dc.b    'Enter 0 to Quit any other number to replay : ',0
-00004F1C= 53 63 6F 72 65 20 ...    593  hud_msg:        dc.b    'Score : ',0
-00004F25                           594  
-00004F26                           595  health:     ds.w    1   Players Health
-00004F28                           596  score:      ds.w    1   Reserve space for score
-00004F2A                           597  
-00004F2A                           598      end start
+00001000  =00000064                 33  mine_loc    EQU 100    used below for some simple collision detection using CMP
+00001000                            34                         * example for a hit
+00001000                            35  
+00001000                            36  
+00001000                            37  *Start of Game
+00001000                            38  start:
+00001000  11FC 0064 4000            39      move.b  #100,$4000 put score/health in memory location $4000
+00001006  47F8 4000                 40      lea     $4000,A3   assign address A3 to that memory location
+0000100A                            41  
+0000100A                            42  
+0000100A  6100 0FFE                 43      bsr     welcome    branch to the welcome subroutine
+0000100E  6100 10B2                 44      bsr     playerName
+00001012  6100 108A                 45      bsr     input      branch to the input subroutine
+00001016  6100 0FE8                 46      bsr     game       branch to the game subroutine
+0000101A                            47  *Game loop
+00002000                            48      org     $2000      the rest of the program is to be located from 3000 onwards
+00002000                            49  
+00002000                            50  *-------------------------------------------------------
+00002000                            51  *-------------------Game Subroutine---------------------
+00002000                            52  *-------------------------------------------------------
+00002000                            53  game:
+00002000  6100 00AE                 54      bsr     gameloop   branch to gameloop subroutine
+00002004  4E75                      55      rts                return from game: subroutine
+00002006                            56            
+00002006                            57  end:
+00002006  FFFF FFFF                 58      simhalt
+0000200A                            59  *------------------------------------------------------
+0000200A                            60  *----------------------Address data--------------------
+0000200A                            61  *------------------------------------------------------    
+0000200A  =00009000                 62  NAME EQU $9000 ; stores the name to an adress
+0000200A  =00009500                 63  COMPANY_NAME EQU $9500 ; stores the player's company name
+0000200A                            64  
+0000200A                            65  *-------------------------------------------------------
+0000200A                            66  *-------------------Welcome Subroutine------------------
+0000200A                            67  *-------------------------------------------------------
+0000200A                            68  welcome:
+0000200A  6100 06D6                 69      bsr     endl            branch to endl subroutine
+0000200E  43F9 000026FB             70      lea     welcome_msg,A1  assign message to address register A1
+00002014  103C 000E                 71      move.b  #14,D0          move literal 14 to DO
+00002018  4E4F                      72      trap    #15             trap and interpret value in D0
+0000201A                            73      
+0000201A  103C 0004                 74      move.b  #4, D0          stops the continuing to the next msg 
+0000201E  4E4F                      75      trap    #15             trap and interpret value in D0
+00002020                            76      
+00002020                            77      ;creates the data for the player and enemies
+00002020  33FC 07D0 00010000        78      move #2000, $10000 *Player Money data address
+00002028  33FC 0064 00010050        79      move #100,$10050    *player Health data address
+00002030  33FC 0032 00010100        80      move #50, $10100 * Player's might data address
+00002038  33FC 01F4 00010200        81      move #500,$10200 * Deserters fighting power
+00002040  33FC 03E8 00010300        82      move #1000,$10300 * Militia camp fighting power
+00002048  33FC 05DC 00010400        83      move #1500,$10400 * Rebel mercenery camp fighting power
+00002050  33FC 07D0 00010500        84      move #2000,$10500 * Mercs fighting power
+00002058  33FC 0000 00010600        85      move #0,   $10600 * -Medical supply-
+00002060  33FC 0000 00010610        86      move #0,   $10610 * Bandage
+00002068  33FC 0000 00010620        87      move #0,   $10620 * Pills
+00002070  33FC 0000 00010630        88      move #0,   $10630 * Medkits
+00002078  33FC 0000 00010700        89      move #0,   $10700 * -Weapons-
+00002080  33FC 0000 00010710        90      move #0,   $10710 * Ak-47s
+00002088  33FC 0000 00010720        91      move #0,   $10720 * M4s
+00002090  33FC 0000 00010730        92      move #0,   $10730 * Sniper-rife
+00002098                            93      
+00002098  6100 0648                 94      bsr     endl            branch to endl subroutine
+0000209C  4E75                      95      rts                     return from welcome: subroutine
+0000209E                            96  *------------------------------------------------------
+0000209E                            97  *---------Gameplay Input Values Subroutine--------------
+0000209E                            98  *-------------------------------------------------------    
+0000209E                            99  input:
+0000209E  6100 006A                100      bsr     location        branch to location input subroutine
+000020A2  6100 0626                101      bsr clear_screen    ;clears the screen
+000020A6  6100 010C                102      bsr     Town         branch to potion input subroutine
+000020AA  6100 061E                103      bsr clear_screen    ;clears the screen
+000020AE  4E75                     104      rts
+000020B0                           105  
+000020B0                           106  *-------------------------------------------------------
+000020B0                           107  *----------------Gameloop (main loop)-------------------
+000020B0                           108  *------------------------------------------------------- 
+000020B0                           109  gameloop:
+000020B0  6100 05EA                110      bsr     gameplay        branch to gameplay subroutine
+000020B4  6100 0614                111      bsr     clear_screen    clears the screen
+000020B8                           112  
+000020B8  6100 061C                113      bsr     replay          branch to replay game subroutine
+000020BC  6100 060C                114      bsr     clear_screen    clears the screen
+000020C0  4E75                     115      rts                     return from gameloop: subroutine
+000020C2                           116  
+000020C2                           117  *-------------------------------------------------------
+000020C2                           118  *------------ Player name and Company name---------------
+000020C2                           119  *-------------------------------------------------------
+000020C2                           120  playerName:
+000020C2  6100 0606                121      bsr clear_screen ;clears the screen
+000020C6  43F9 00002C8A            122      lea     name_msg,A1 ; creates the message
+000020CC  103C 000E                123      move.b  #14,D0 ; display the message
+000020D0  4E4F                     124      trap    #15 ; trap and interpret value in D0
+000020D2                           125      
+000020D2  43F9 00009000            126      lea     NAME,a1 ; creates the message
+000020D8  103C 0002                127      move.b  #2,D0 ; stops the message from continuing to the next msg
+000020DC  4E4F                     128      trap    #15 ; trap and interpret value in D0
+000020DE                           129      
+000020DE  43F9 00002DD9            130      lea     passport_msg,A1 ; creates the message
+000020E4  103C 000E                131      move.b  #14,D0 ; display the message
+000020E8  4E4F                     132      trap    #15 ; trap and interpret value in D0
+000020EA                           133      
+000020EA  43F9 00002EB9            134      lea     company_msg,a1 ; creates the message
+000020F0  103C 0002                135      move.b  #2,D0 ; display the message
+000020F4  4E4F                     136      trap    #15 ; trap and interpret value in Dsg,
+000020F6                           137  
+000020F6  43F9 0000318B            138      lea     certificate_msg,A1 ; creates the message
+000020FC  103C 000E                139      move.b  #14,D0 ; display the message
+00002100  4E4F                     140      trap    #15 ; trap and interpret value in D0
+00002102                           141      
+00002102  103C 0004                142      move.b #4,d0 ; stops the texts from conutining on
+00002106  4E4F                     143      trap    #15 ; trap and interpret value in D0
+00002108                           144      
+00002108                           145  
+00002108                           146  
+00002108  4E75                     147      rts
+0000210A                           148     
+0000210A                           149  *-------------------------------------------------------
+0000210A                           150  *--------------------Location---------------------------
+0000210A                           151  * where you staring place is
+0000210A                           152  *------------------------------------------------------- 
+0000210A                           153  location: 
+0000210A  6100 05BE                154      bsr     clear_screen ; clears the screen
+0000210E  43F9 00003599            155      lea     location_msg,A1 ; sends the msg to a1
+00002114  103C 000E                156      move.b  #14,D0  ; displays the message
+00002118  4E4F                     157      trap    #15     ;trap and interpret value in D0
+0000211A  43F9 00003DEE            158      lea     location_text,a1
+00002120  103C 000E                159      move.b  #14,D0  ;display the message
+00002124  4E4F                     160      trap    #15     ;trap and interpret value in D0
+00002126  103C 0004                161      move.b  #4,D0        stops the continuing to the next msg   
+0000212A  4E4F                     162      trap    #15          trap and interpret value in D0
+0000212C                           163      
+0000212C  B27C 0001                164      cmp     #Iraq,d1 ;checks the number
+00002130  6700 0016                165      beq     LocationA ; go to this branch
+00002134  B27C 0002                166      cmp     #Iran, d1 ;checks the number
+00002138  6700 0032                167      beq     LocationB ; go to this branch
+0000213C  B27C 0003                168      cmp     #Syria,d1 ;checks the number
+00002140  6700 004E                169      beq     LocationC ; go to this branch
+00002144  61C4                     170      bsr     location ; go to this branch if none of the three is pressed
+00002146  4E75                     171      rts
+00002148                           172  
+00002148                           173  *-------------------------------------------------------
+00002148                           174  *--------------------Iraq-------------------------------
+00002148                           175  * Iraq Actions
+00002148                           176  *------------------------------------------------------- 
+00002148                           177  
+00002148                           178  LocationA:
+00002148                           179  
+00002148  6100 0580                180      bsr     clear_screen ; clears the screen
+0000214C  43F9 00003E91            181      lea     Iraq_msg,A1 ; sends the msg to a1
+00002152  103C 000E                182      move.b  #14,d0 ; display the text
+00002156  4E4F                     183      trap    #15 ;trap and interpret value in D0
+00002158  43F9 00004176            184      lea     startStats_msg,A1 ; sends the msg to a1
+0000215E  103C 000E                185      move.b  #14,d0 ; display the text
+00002162  4E4F                     186      trap    #15 ;trap and interpret value in D0
+00002164  103C 0004                187      move.b  #4,d0 ; stops the texts from conutining on
+00002168  4E4F                     188      trap    #15 ;trap and interpret value in D0
+0000216A  4E75                     189      rts ; returns
+0000216C                           190  *-------------------------------------------------------
+0000216C                           191  *--------------------Iran-------------------------------
+0000216C                           192  * Iran Actions
+0000216C                           193  *------------------------------------------------------- 
+0000216C                           194  
+0000216C                           195  LocationB:
+0000216C                           196  
+0000216C  6100 055C                197      bsr     clear_screen ; clears the screen
+00002170  43F9 00003F88            198      lea     Iran_msg,A1 ; sends the msg to a1
+00002176  103C 000E                199      move.b  #14,d0 ; display the text
+0000217A  4E4F                     200      trap    #15 ;trap and interpret value in D0
+0000217C  43F9 00004176            201      lea     startStats_msg,A1 ; sends the msg to a1
+00002182  103C 000E                202      move.b  #14,d0 ; display the text
+00002186  4E4F                     203      trap    #15 ;trap and interpret value in D0
+00002188  103C 0004                204      move.b  #4,d0 ; stops the texts from conutining on
+0000218C  4E4F                     205      trap    #15 ;trap and interpret value in D0
+0000218E  4E75                     206      rts ; returns
+00002190                           207  
+00002190                           208  *-------------------------------------------------------
+00002190                           209  *--------------------Syria-----------------------------
+00002190                           210  * Syria Actions
+00002190                           211  *------------------------------------------------------- 
+00002190                           212  
+00002190                           213  LocationC
+00002190                           214  
+00002190  6100 0538                215      bsr     clear_screen ; clears the screen
+00002194  43F9 0000407F            216      lea     Syria_msg,A1 ;sends the msg to a1
+0000219A  103C 000E                217      move.b  #14,d0 ; display the text
+0000219E  4E4F                     218      trap    #15 ;trap and interpret value in D0
+000021A0  43F9 00004176            219      lea     startStats_msg,A1 ; sends the msg to a1
+000021A6  103C 000E                220      move.b  #14,d0 ; display the text
+000021AA  4E4F                     221      trap    #15 ;trap and interpret value in D0
+000021AC  103C 0004                222      move.b  #4,d0  ; stops the texts from conutining on
+000021B0  4E4F                     223      trap    #15 ;trap and interpret value in D0
+000021B2  4E75                     224      rts ; returns
+000021B4                           225  *-------------------------------------------------------
+000021B4                           226  *--------------------Town-----------------------------
+000021B4                           227  * town Actions
+000021B4                           228  *------------------------------------------------------- 
+000021B4                           229  
+000021B4                           230  Town:
+000021B4                           231  
+000021B4  6100 0514                232      bsr     clear_screen ; clears the screen
+000021B8  43F9 00004459            233      lea     town_msg,A1 ;sends the msg to a1
+000021BE  103C 000E                234      move.b  #14,d0 ; display the text
+000021C2  4E4F                     235      trap    #15 ;trap and interpret value in D0
+000021C4  103C 0004                236      move.b  #4,d0 ; stops the texts from conutining on
+000021C8  4E4F                     237      trap    #15 ;trap and interpret value in D0
+000021CA                           238      
+000021CA  B27C 0001                239      cmp     #Hospital,d1 ; checks 
+000021CE  6700 002A                240      beq     Shop1 ; go to this branch
+000021D2  B27C 0002                241      cmp     #Black_Market, d1 ; checks 
+000021D6  6700 00F4                242      beq     Shop2 ; go to this branch
+000021DA  B27C 0003                243      cmp     #Contractors,d1 ; checks 
+000021DE  6700 01C0                244      beq     Shop3 ; go to this branch
+000021E2  B27C 0004                245      cmp     #leaveTown,d1 ; checks 
+000021E6  6700 0210                246      beq     Leave ; go to this branch
+000021EA  B27C 0005                247      cmp     #5,d1 ; checks 
+000021EE  6700 02B8                248      beq     Inventory ; go to this branch
+000021F2  6100 04D6                249      bsr     clear_screen    clears the screen
+000021F6  61BC                     250      bsr     town ; if none of the is selected reset
+000021F8  4E75                     251      rts
+000021FA                           252      
+000021FA                           253  *-------------------------------------------------------
+000021FA                           254  *--------------------Hospital-----------------------------
+000021FA                           255  * Hospital Actions
+000021FA                           256  *------------------------------------------------------- 
+000021FA                           257  
+000021FA                           258  Shop1:
+000021FA  6100 04CE                259      bsr     clear_screen ; clears the screen
+000021FE  43F9 00004CD0            260      lea     Hospital_msg,A1 ;sends the msg to a1
+00002204  103C 000E                261      move.b  #14,d0 ; display the text
+00002208  4E4F                     262      trap    #15 ;trap and interpret value in D0
+0000220A                           263        
+0000220A  103C 0004                264      move.b  #4,d0 ; stops the texts from conutining on
+0000220E  4E4F                     265      trap    #15 ;trap and interpret value in D0
+00002210                           266      
+00002210  143C 0000                267      move.b  #0,d2 ; resets the resgister d2 to 0
+00002214                           268      
+00002214  B27C 0001                269      cmp     #1,d1 ; checks
+00002218  6700 001E                270      beq     Bandages ; branch to this
+0000221C                           271      
+0000221C  B27C 0002                272      cmp     #2,d1 ; checks
+00002220  6700 0046                273      beq     Pills ; branch to this
+00002224                           274      
+00002224  B27C 0003                275      cmp     #3,d1 ; checks
+00002228  6700 0070                276      beq     Medkits ; branch to this
+0000222C                           277     
+0000222C  B27C 0004                278      cmp     #4,d1 ; checks
+00002230  6782                     279      beq     Town ; branch to this
+00002232  61C6                     280      bsr     Shop1 ; if none is selected to reset
+00002234  6100 0494                281      bsr     clear_screen    clears the screen
+00002238                           282      
+00002238                           283  Bandages:
+00002238  6100 01F4                284      bsr     display_stat  ;displays the stat of the player
+0000223C  43F9 000061A5            285      lea     bandage_msg,a1  ;sends the msg to a1
+00002242  103C 000E                286      move.b  #14,d0 ; display the text
+00002246  4E4F                     287      trap    #15 ;trap and interpret value in D0
+00002248                           288     
+00002248  103C 0004                289      move.b  #4,d0 ; stops the texts from conutining on
+0000224C  4E4F                     290      trap    #15 ;trap and interpret value in D0
+0000224E                           291      
+0000224E  D379 00010600            292      add D1, ($10600) ; adds to the medical supply
+00002254  D379 00010610            293      add D1, ($10610) ; adds to the bandage supply
+0000225A                           294     
+0000225A  0642 0028                295      add #40, d2 ; add 40 to d2
+0000225E  C4C1                     296      mulu  d1,d2 ; then mulitply it by the user input
+00002260  9579 00010000            297      sub d2, ($10000) ; subtract it to the money
+00002266                           298  
+00002266                           299  
+00002266  6192                     300      bsr Shop1 ; branch to this
+00002268                           301  Pills:
+00002268  6100 01C4                302      bsr     display_stat ; displays the player stat 
+0000226C  43F9 000061F2            303      lea     pills_msg,a1 ;sends the msg to a1
+00002272  103C 000E                304      move.b  #14,d0 ; display the text
+00002276  4E4F                     305      trap    #15 ;trap and interpret value in D0
+00002278                           306     
+00002278  103C 0004                307      move.b  #4,d0 ; stops the texts from conutining on
+0000227C  4E4F                     308      trap    #15 ;trap and interpret value in D0
+0000227E                           309      
+0000227E  D379 00010600            310      add D1, ($10600) ; adds to the medical supply
+00002284  D379 00010620            311      add D1, ($10620) ; adds to the pill supply
+0000228A                           312     
+0000228A  0642 003C                313      add #60, d2 ; add 60 to d2
+0000228E  C4C1                     314      mulu  d1,d2 ; multiply d2 to d1
+00002290  9579 00010000            315      sub d2, ($10000) ; subtract it to the money
+00002296  6100 FF62                316      bsr Shop1
+0000229A                           317  
+0000229A                           318  Medkits:
+0000229A  6100 0192                319      bsr     display_stat ; display the stat of the player
+0000229E  43F9 0000623E            320      lea     medkits_msg,a1  ;sends the msg to a1
+000022A4  103C 000E                321      move.b  #14,d0 ; display the text
+000022A8  4E4F                     322      trap    #15 ;trap and interpret value in D0
+000022AA                           323     
+000022AA  103C 0004                324      move.b  #4,d0 ; stops the texts from conutining on
+000022AE  4E4F                     325      trap    #15 ;trap and interpret value in D0
+000022B0                           326      
+000022B0  D379 00010600            327      add D1, ($10600) ; adds to the medical supply
+000022B6  D379 00010630            328      add D1, ($10630) ; adds to medkit supply
+000022BC                           329     
+000022BC  0642 0064                330      add #100, d2 ; add 100 to d2
+000022C0  C4C1                     331      mulu  d1,d2 ; ; multiply d2 to d1
+000022C2  9579 00010000            332      sub d2, ($10000)  ; subtract it to the money
+000022C8                           333  
+000022C8  6100 FF30                334      bsr Shop1
+000022CC                           335          
+000022CC                           336      
+000022CC                           337  *-------------------------------------------------------
+000022CC                           338  *--------------------Black Market-----------------------------
+000022CC                           339  * Black Market Actions
+000022CC                           340  *------------------------------------------------------- 
+000022CC                           341  
+000022CC                           342  Shop2:
+000022CC  6100 03FC                343      bsr     clear_screen ;clears the screen
+000022D0  43F9 00005476            344      lea     BlackMarket_msg,A1 ;sends the msg to a1
+000022D6  103C 000E                345      move.b  #14,d0 ; display the text
+000022DA  4E4F                     346      trap    #15 ;trap and interpret value in D0
+000022DC                           347      
+000022DC  103C 0004                348      move.b  #4,d0 ; stops the texts from conutining on
+000022E0  4E4F                     349      trap    #15 ;trap and interpret value in D0
+000022E2                           350      
+000022E2  143C 0000                351      move.b  #0,d2 ; resets the d2 to 0
+000022E6                           352      
+000022E6  B27C 0001                353      cmp     #1,d1 ; checks
+000022EA  6700 0020                354      beq     AK47
+000022EE                           355      
+000022EE  B27C 0002                356      cmp     #2,d1 ; checks
+000022F2  6700 0048                357      beq     M4
+000022F6                           358      
+000022F6  B27C 0003                359      cmp     #3,d1 ; checks
+000022FA  6700 0072                360      beq     SniperRife
+000022FE                           361      
+000022FE  B27C 0004                362      cmp     #4,d1 ; checks
+00002302  6700 FEB0                363      beq     Town
+00002306  61C4                     364      bsr     Shop2
+00002308                           365  
+00002308  6100 03C0                366      bsr     clear_screen    clears the screen
+0000230C                           367      
+0000230C                           368      
+0000230C                           369  AK47:
+0000230C  6100 0120                370      bsr     display_stat  ; displays the player stats
+00002310  43F9 0000628B            371      lea     ak47_msg,a1 ;sends the msg to a1
+00002316  103C 000E                372      move.b  #14,d0 ; display the text
+0000231A  4E4F                     373      trap    #15 ;trap and interpret value in D0
+0000231C                           374     
+0000231C  103C 0004                375      move.b  #4,d0 ; stops the texts from conutining on
+00002320  4E4F                     376      trap    #15 ;trap and interpret value in D0
+00002322                           377      
+00002322  D379 00010700            378      add D1, ($10700) ;weapon supply
+00002328  D379 00010710            379      add D1, ($10710) ;AK47 supply
+0000232E                           380     
+0000232E  0642 0032                381      add #50, d2 ; add 50 to d2
+00002332  C4C1                     382      mulu  d1,d2 ; multiply d2 to d1
+00002334  9579 00010000            383      sub d2, ($10000)  ; subtract it to the money
+0000233A                           384      
+0000233A  6190                     385      bsr     Shop2 ; branch to this
+0000233C                           386  M4:
+0000233C  6100 00F0                387      bsr     display_stat  ;display the player's stats
+00002340  43F9 000062D8            388      lea     m4_msg,a1 ;sends the msg to a1
+00002346  103C 000E                389      move.b  #14,d0 ; display the text
+0000234A  4E4F                     390      trap    #15 ;trap and interpret value in D0
+0000234C                           391     
+0000234C  103C 0004                392      move.b  #4,d0 ; stops the texts from conutining on
+00002350  4E4F                     393      trap    #15 ;trap and interpret value in D0
+00002352                           394      
+00002352  D379 00010700            395      add D1, ($10700) ; weapon supply
+00002358  D379 00010720            396      add D1, ($10720)  ; m4 supply
+0000235E                           397     
+0000235E  0642 0064                398      add #100, d2 ; add 100 to d2
+00002362  C4C1                     399      mulu  d1,d2 ; multiply d2 to d1
+00002364  9579 00010000            400      sub d2, ($10000)  ; subtract it to the money
+0000236A                           401      
+0000236A  6100 FF60                402      bsr     Shop2 ; branch to this
+0000236E                           403  
+0000236E                           404  SniperRife:
+0000236E  6100 00BE                405      bsr     display_stat  ; displays the stats of the player
+00002372  43F9 00006325            406      lea     sniper_msg,a1 ;sends the msg to a1
+00002378  103C 000E                407      move.b  #14,d0 ; display the text
+0000237C  4E4F                     408      trap    #15 ;trap and interpret value in D0
+0000237E                           409     
+0000237E  103C 0004                410      move.b  #4,d0 ; stops the texts from conutining on
+00002382  4E4F                     411      trap    #15 ;trap and interpret value in D0
+00002384                           412      
+00002384  D379 00010700            413      add D1, ($10700) ; weapon supply
+0000238A  D379 00010730            414      add D1, ($10730) ; sniper rife
+00002390                           415     
+00002390  0642 0096                416      add #150, d2 ; add 150 to d2
+00002394  C4C1                     417      mulu  d1,d2 ; multiply d2 to d1
+00002396  9579 00010000            418      sub d2, ($10000)  ; subtract it to the money
+0000239C                           419  
+0000239C  6100 FF2E                420      bsr     Shop2 ; branch to this
+000023A0                           421      
+000023A0                           422  *-------------------------------------------------------
+000023A0                           423  *--------------------Contractors office-----------------
+000023A0                           424  * Contractors office Actions
+000023A0                           425  *------------------------------------------------------- 
+000023A0                           426  
+000023A0                           427  Shop3:
+000023A0  6100 0328                428      bsr     clear_screen ; clears the screen
+000023A4  43F9 00005944            429      lea     contractors_msg,A1 ;sends the msg to a1
+000023AA  103C 000E                430      move.b  #14,d0 ; display the text
+000023AE  4E4F                     431      trap    #15 ;trap and interpret value in D0
+000023B0                           432      
+000023B0                           433  
+000023B0  103C 0004                434      move.b  #4,d0 ; stops the texts from conutining on
+000023B4  4E4F                     435      trap    #15 ;trap and interpret value in D0
+000023B6                           436      
+000023B6  123C 0000                437      move.b  #0,d1 reset the value
+000023BA                           438      
+000023BA                           439      
+000023BA  B27C 0001                440      cmp     #1,d1 ; checks
+000023BE  6700 0010                441      beq     Recruit ; branch to this
+000023C2                           442  
+000023C2  B27C 0002                443      cmp     #2,d1 ; checks
+000023C6  6700 FDEC                444      beq     Town ; branch to this
+000023CA  61D4                     445      bsr     Shop3 ; branch
+000023CC  6100 02FC                446      bsr     clear_screen    clears the screen
+000023D0                           447      
+000023D0                           448  *-------------------------------------------------------
+000023D0                           449  *--------------------Contractors office-----------------
+000023D0                           450  * Recruitment office
+000023D0                           451  *------------------------------------------------------- 
+000023D0                           452  Recruit:  
+000023D0  6100 005C                453      bsr     display_stat  ;displays the player stats
+000023D4  43F9 00005FA0            454      lea     recruit_msg,a1 ;sends the msg to a1
+000023DA  103C 000E                455      move.b  #14,d0 ; display the text
+000023DE  4E4F                     456      trap    #15 ;trap and interpret value in D0
+000023E0                           457     
+000023E0  103C 0004                458      move.b  #4,d0 ; stops the texts from conutining on
+000023E4  4E4F                     459      trap    #15 ;trap and interpret value in D0
+000023E6                           460      
+000023E6  C2FC 0064                461      mulu #100, D1 :mulitply 100 to regiseter d1
+000023EA                           462   
+000023EA  9379 00010000            463      sub D1, ($10000)  : sub d2, ($10000)  ; subtract it to the money
+000023F0  D379 00010100            464      add D1, ($10100)  ; subtract it to the money
+000023F6                           465  
+000023F6  61A8                     466      bsr Shop3 branch to this
+000023F8                           467     
+000023F8                           468      
+000023F8                           469  *-------------------------------------------------------
+000023F8                           470  *--------------------Leave the town-----------------
+000023F8                           471  *Leave town Actions
+000023F8                           472  *------------------------------------------------------- 
+000023F8                           473  
+000023F8                           474  Leave:
+000023F8  6100 02D0                475      bsr     clear_screen ;clears the screen
+000023FC  43F9 00003599            476      lea     location_msg,A1 ;sends the msg to a1
+00002402  103C 000E                477      move.b  #14,D0 ; display the text
+00002406  4E4F                     478      trap    #15 ;trap and interpret value in D0
+00002408  43F9 0000603F            479      lea     action_msg,A1 ;sends the msg to a1
+0000240E  103C 000E                480      move.b  #14,d0 #14,D0 ; display the text
+00002412  4E4F                     481      trap    #15 ;trap and interpret value in D0
+00002414  103C 0004                482      move.b  #4,d0 ; stops the texts from conutining on
+00002418  4E4F                     483      trap    #15 ;trap and interpret value in D0
+0000241A                           484      
+0000241A  B07C 0001                485      cmp     #1,d0 ; checks
+0000241E  6700 027C                486      beq     gameplay ;noy playable in terms of combant
+00002422                           487      
+00002422  B27C 0002                488      cmp     #2,d1 ; checks
+00002426  6700 FD8C                489      beq     Town branch
+0000242A                           490  
+0000242A  6100 029E                491      bsr     clear_screen    clears the screen
+0000242E                           492      
+0000242E                           493  *-------------------------------------------------------
+0000242E                           494  *--------------------Display stats-----------------
+0000242E                           495  * Display stats
+0000242E                           496  *-------------------------------------------------------    
+0000242E                           497  
+0000242E                           498  display_stat:
+0000242E  43F9 000060EE            499      lea health_msg,A1 ;sends the msg to a1
+00002434  103C 000E                500      move.b #14, D0 ; display the text
+00002438  4E4F                     501      trap #15 ;trap and interpret value in D0
+0000243A                           502      
+0000243A  3239 00010050            503      move ($10050),D1 ; player heatlh
+00002440  103C 0003                504      move.b #3, D0 ; show its value
+00002444  4E4F                     505      trap #15 ;trap and interpret value in D0
+00002446                           506      
+00002446  43F9 000060E4            507      lea money_msg,A1 ;sends the msg to a1
+0000244C  103C 000E                508      move.b #14, D0 ; display the text
+00002450  4E4F                     509      trap #15 ;trap and interpret value in D0
+00002452                           510      
+00002452  3239 00010000            511      move ($10000),D1 ; heatlh data
+00002458  103C 0003                512      move.b #3, D0 ; show its value
+0000245C  4E4F                     513      trap #15 ;trap and interpret value in D0
+0000245E                           514       
+0000245E  43F9 000060F9            515      lea might_msg,A1 ;sends the msg to a1
+00002464  103C 000E                516      move.b #14, D0 ; display the text
+00002468  4E4F                     517      trap #15 ;trap and interpret value in D0
+0000246A                           518      
+0000246A  3239 00010100            519      move ($10100),D1
+00002470  103C 0003                520      move.b #3, D0 ; show its value
+00002474  4E4F                     521      trap #15 ;trap and interpret value in D0
+00002476                           522      
+00002476  43F9 00006103            523      lea medical_msg,A1 ;sends the msg to a1
+0000247C  103C 000E                524      move.b #14, D0 ; display the text
+00002480  4E4F                     525      trap #15 ;trap and interpret value in D0
+00002482                           526      
+00002482  3239 00010600            527      move ($10600),D1
+00002488  103C 0003                528      move.b #3, D0 ; show its value
+0000248C  4E4F                     529      trap #15 ;trap and interpret value in D0
+0000248E                           530      
+0000248E  43F9 00006116            531      lea weapons_msg,A1 ;sends the msg to a1
+00002494  103C 000E                532      move.b #14, D0 ; display the text
+00002498  4E4F                     533      trap #15 ;trap and interpret value in D0
+0000249A                           534      
+0000249A  3239 00010700            535      move ($10700),D1
+000024A0  103C 0003                536      move.b #3, D0 ; show its value
+000024A4  4E4F                     537      trap #15 ;trap and interpret value in D0
+000024A6                           538      
+000024A6  4E75                     539      rts
+000024A8                           540  *--------------------------------------------------------
+000024A8                           541  *--------------------Inventory-----------------
+000024A8                           542  * Inventory
+000024A8                           543  *-------------------------------------------------------    
+000024A8                           544  
+000024A8                           545  Inventory:
+000024A8                           546  
+000024A8  6184                     547      bsr     display_stat ; displays the player stats
+000024AA                           548      
+000024AA  43F9 00006128            549      lea item1_msg,A1 ;sends the msg to a1
+000024B0  103C 000E                550      move.b #14, D0 ; display the text
+000024B4  4E4F                     551      trap #15 ;trap and interpret value in D0
+000024B6                           552      
+000024B6  3239 00010610            553      move ($10610),D1 ; move to d1
+000024BC  103C 0003                554      move.b #3, D0 ; show its value
+000024C0  4E4F                     555      trap #15 ;trap and interpret value in D0
+000024C2                           556      
+000024C2  43F9 0000613B            557      lea item2_msg,A1 ;sends the msg to a1
+000024C8  103C 000E                558      move.b #14, D0 ; display the text
+000024CC  4E4F                     559      trap #15 ;trap and interpret value in D0
+000024CE                           560      
+000024CE  3239 00010620            561      move ($10620),D1 ; move to d1
+000024D4  103C 0003                562      move.b #3, D0 ; show its value
+000024D8  4E4F                     563      trap #15 ;trap and interpret value in D0
+000024DA                           564       
+000024DA  43F9 0000614B            565      lea item3_msg,A1 ;sends the msg to a1
+000024E0  103C 000E                566      move.b #14, D0 ; display the text
+000024E4  4E4F                     567      trap #15 ;trap and interpret value in D0
+000024E6                           568      
+000024E6  3239 00010630            569      move ($10630),D1 ; move to d1
+000024EC  103C 0003                570      move.b #3, D0 ; show its value
+000024F0  4E4F                     571      trap #15 ;trap and interpret value in D0
+000024F2                           572      
+000024F2  43F9 0000615E            573      lea item4_msg,A1 ;sends the msg to a1
+000024F8  103C 000E                574      move.b #14, D0 ;displays the text
+000024FC  4E4F                     575      trap #15 ;trap and interpret value in D0
+000024FE                           576      
+000024FE  3239 00010710            577      move ($10710),D1 ; move to d1
+00002504  103C 0003                578      move.b #3, D0 ; show its value
+00002508  4E4F                     579      trap #15 ;trap and interpret value in D0
+0000250A                           580      
+0000250A  43F9 0000616E            581      lea item5_msg,A1 ;sends the msg to a1
+00002510  103C 000E                582      move.b #14, D0 ;displays the text
+00002514  4E4F                     583      trap #15 ;trap and interpret value in D0
+00002516                           584      
+00002516  3239 00010720            585      move ($10720),D1 ; move to d1
+0000251C  103C 0003                586      move.b #3, D0  ;displays the value
+00002520  4E4F                     587      trap #15 ;trap and interpret value in D0
+00002522                           588      
+00002522  43F9 0000617C            589      lea item6_msg,A1 ;sends the msg to a1
+00002528  103C 000E                590      move.b #14, D0 ;displays the text
+0000252C  4E4F                     591      trap #15 ;trap and interpret value in D0
+0000252E                           592      
+0000252E  3239 00010720            593      move ($10720),D1 ; move to d1
+00002534  103C 0003                594      move.b #3, D0 ; show its value
+00002538  4E4F                     595      trap #15 ;trap and interpret value in D0
+0000253A                           596      
+0000253A  43F9 00006194            597      lea inventory_msg,a1 ;sends the msg to a1
+00002540  103C 000E                598      move.b  #14,d0 ; display the text
+00002544  4E4F                     599      trap    #15 ;trap and interpret value in D0
+00002546                           600      
+00002546  103C 0004                601      move.b  #4,d0 ; stops the text from continuing 
+0000254A  4E4F                     602      trap    #15 ;trap and interpret value in D0
+0000254C                           603      
+0000254C  B27C 0001                604      cmp     #1,d1 ; checks
+00002550  6700 000E                605      beq     Consumption ; branch to this
+00002554                           606      
+00002554  B27C 0002                607      cmp     #2,d1 ; checks
+00002558  6700 FC5A                608      beq     Town ;branch to this
+0000255C                           609      
+0000255C  0641 0000                610      add #0,D1 ; reset the resigster d1 to 0
+00002560                           611  
+00002560                           612  *--------------------------------------------------------
+00002560                           613  *--------------------Consumption-----------------
+00002560                           614  * Consumption - Not Working as intended
+00002560                           615  *-------------------------------------------------------   
+00002560                           616  
+00002560                           617  Consumption:
+00002560                           618  
+00002560                           619      
+00002560  43F9 00006372            620      lea     choice_msg,a1 ;sends the msg to a1
+00002566  103C 000E                621      move.b  #14,d0 ; display the text
+0000256A  4E4F                     622      trap    #15 ;trap and interpret value in D0
+0000256C                           623      
+0000256C  103C 0004                624      move.b  #4,d0 ; stops the texts from conutining on
+00002570  4E4F                     625      trap    #15 ;trap and interpret value in D0
+00002572                           626      
+00002572  B07C 0001                627      cmp #1,d0 ; checks
+00002576  6700 002A                628      beq medUse1 ; branch to this
+0000257A  B07C 0002                629      cmp #2,d0 ; checks
+0000257E  6700 004A                630      beq medUse2 ; branch to this
+00002582  B07C 0003                631      cmp #3,d0 ; checks
+00002586  6700 006C                632      beq medUse3 ; branch to this
+0000258A  B07C 0004                633      cmp #4,d0 ; checks
+0000258E  6700 008E                634      beq weapUse1 ; branch to this
+00002592  B07C 0005                635      cmp #5,d0 ; checks
+00002596  6700 00B0                636      beq weapUse2 ; branch to this
+0000259A  B07C 0006                637      cmp #6,d0 ; checks
+0000259E  6700 00D2                638      beq weapUse3 ; branch to this
+000025A2                           639  
+000025A2                           640  medUse1:
+000025A2  43F9 000063D6            641      lea consumption_msg,a1 ;sends the msg to a1
+000025A8  103C 000E                642      move.b  #14,d0 ; display the text
+000025AC  4E4F                     643      trap    #15 ;trap and interpret value in D0
+000025AE                           644      
+000025AE  103C 0004                645      move.b  #4,d0 ; stops the texts from conutining on
+000025B2  4E4F                     646      trap    #15 ;trap and interpret value in D0
+000025B4                           647      
+000025B4  9379 00010600            648      sub D1, ($10600) ;subtract medical supply
+000025BA  9379 00010610            649      sub D1, ($10610) ;subtract bandage supply
+000025C0                           650     
+000025C0  D579 00010000            651      add d2, ($10000) ;subtract money
+000025C6  6100 FEE0                652      bsr Inventory ; branch to this
+000025CA                           653  medUse2:
+000025CA  43F9 000063D6            654      lea consumption_msg,a1 ;sends the msg to a1
+000025D0  103C 000E                655      move.b  #14,d0 ; display the text
+000025D4  4E4F                     656      trap    #15 ;trap and interpret value in D0
+000025D6                           657      
+000025D6  103C 0004                658      move.b  #4,d0 ; stops the texts from conutining on
+000025DA  4E4F                     659      trap    #15 ;trap and interpret value in D0
+000025DC                           660      
+000025DC  0679 0064 00010050       661      add #100, ($10050) ;player heals
+000025E4  9379 00010600            662      sub D1, ($10600) ;subtract medical supply
+000025EA  9379 00010620            663      sub D1, ($10620) subtract pills supply
+000025F0  6100 FEB6                664      bsr Inventory ; branch to this
+000025F4                           665  medUse3:
+000025F4  43F9 000063D6            666      lea consumption_msg,a1 ;sends the msg to a1
+000025FA  103C 000E                667      move.b  #14,d0 ; display the text
+000025FE  4E4F                     668      trap    #15 ;trap and interpret value in D0
+00002600                           669      
+00002600  103C 0004                670      move.b  #4,d0 ; stops the texts from conutining on
+00002604  4E4F                     671      trap    #15 ;trap and interpret value in D0
+00002606                           672      
+00002606  0679 0096 00010050       673      add #150, ($10050) ; give health to the player
+0000260E  9179 00010600            674      sub D0, ($10600) ;subtract medical supply
+00002614  9179 00010630            675      sub D0, ($10630) subtract medkits supply
+0000261A  6100 FE8C                676      bsr Inventory ; branch to this
+0000261E                           677  weapUse1:
+0000261E  43F9 000063D6            678      lea consumption_msg,a1 ;sends the msg to a1
+00002624  103C 000E                679      move.b  #14,d0 ; display the text
+00002628  4E4F                     680      trap    #15 ;trap and interpret value in D0
+0000262A                           681      
+0000262A  103C 0004                682      move.b  #4,d0 ; stops the texts from conutining on
+0000262E  4E4F                     683      trap    #15 ;trap and interpret value in D0
+00002630                           684      
+00002630  0679 0032 00010100       685      add #50, ($10100) ;subtract weapon supply
+00002638  9379 00010700            686      sub D1, ($10700) ;subtract weapon supply
+0000263E  9379 00010710            687      sub D1, ($10710) ;subtract  ak-47 weapon supply
+00002644  6100 FE62                688      bsr Inventory ; branch to this
+00002648                           689  weapUse2:
+00002648  43F9 000063D6            690      lea consumption_msg,a1 ;sends the msg to a1
+0000264E  103C 000E                691      move.b  #14,d0 ; display the text
+00002652  4E4F                     692      trap    #15 ;trap and interpret value in D0
+00002654                           693      
+00002654  103C 0004                694      move.b  #4,d0 ; stops the texts from conutining on
+00002658  4E4F                     695      trap    #15 ;trap and interpret value in D0
+0000265A                           696      
+0000265A  0679 0064 00010100       697      add #100, ($10100) ;subtract weapon supply
+00002662  9379 00010700            698      sub D1, ($10700) ;subtract weapon supply
+00002668  9379 00010720            699      sub D1, ($10720) ;subtract  m4 weapon supply
+0000266E  6100 FE38                700      bsr Inventory ; branch to this
+00002672                           701  weapUse3:
+00002672  43F9 000063D6            702      lea consumption_msg,a1 ;sends the msg to a1
+00002678  103C 000E                703      move.b  #14,d0 ; display the text
+0000267C  4E4F                     704      trap    #15 ;trap and interpret value in D0
+0000267E                           705      
+0000267E  103C 0004                706      move.b  #4,d0 ; stops the texts from conutining on
+00002682  4E4F                     707      trap    #15 ;trap and interpret value in D0
+00002684                           708      
+00002684  0679 0096 00010100       709      add #150, ($10100) ; add might to player stats
+0000268C  9379 00010700            710      sub D1, ($10700) ;subtract weapon supply
+00002692  9379 00010730            711      sub D1, ($10730) ; subtrct sniper rife supply
+00002698  6100 FE0E                712      bsr Inventory ; branch to this
+0000269C                           713  *-------------------------------------------------------
+0000269C                           714  *---Game Play (Quest Progress)--------------------------
+0000269C                           715  *------------------------------------------------------- 
+0000269C                           716  gameplay:
+0000269C  6100 0044                717      bsr     endl ; next line
+000026A0  43F9 00006403            718      lea     gameplay_msg,A1 ;sends the msg to a1
+000026A6  103C 000E                719      move.b  #14,D0 ; display the text
+000026AA  4E4F                     720      trap    #15 ;trap and interpret value in D0
+000026AC  103C 0004                721      move.b  #4,D0       stops the continuing to the next msg 
+000026B0  4E4F                     722      trap    #15         trap and interpret value in D0
+000026B2  4E75                     723      rts
+000026B4                           724  
+000026B4                           725  *-------------------------------------------------------
+000026B4                           726  *------------------Screen Decoration--------------------
+000026B4                           727  *-------------------------------------------------------
+000026B4                           728  out:
+000026B4  43F9 00006450            729      lea     loop_msg,A1 ;sends the msg to a1
+000026BA  103C 000E                730      move.b  #14,D0 ; display the text
+000026BE  4E4F                     731      trap    #15 ; trap and interpret value in D0
+000026C0  5343                     732      sub     #1,D3   decrement loop counter
+000026C2  66F0                     733      bne     out     repeat until D0=0
+000026C4  6100 001C                734      bsr     endl ; next line
+000026C8  4E75                     735      rts ; return
+000026CA                           736      
+000026CA                           737  clear_screen: 
+000026CA  103C 000B                738      move.b  #11,D0      clear screen
+000026CE  323C FF00                739      move.w  #$ff00,D1 ; ?????
+000026D2  4E4F                     740      trap    #15 ;trap and interpret value in D0
+000026D4  4E75                     741      rts
+000026D6                           742  *-------------------------------------------------------
+000026D6                           743  *------------------------Replay-------------------------
+000026D6                           744  *-------------------------------------------------------
+000026D6                           745  replay:
+000026D6                           746  
+000026D6  B27C 0000                747      cmp     #exit,D1 ;Checks
+000026DA  6700 F92A                748      beq     end         if SR Z register contains 1 beq => Branch Equals
+000026DE  6100 F9D0                749      bsr     gameloop ; game loop
+000026E2                           750  
+000026E2                           751  endl:
+000026E2  48E7 8040                752      movem.l D0/A1,-(A7)
+000026E6  303C 000E                753      move    #14,D0 ; display the text
+000026EA  43F9 000026F8            754      lea     crlf,A1
+000026F0  4E4F                     755      trap    #15 ;trap and interpret value in D0
+000026F2  4CDF 0201                756      movem.l (A7)+,D0/A1
+000026F6  4E75                     757      rts
+000026F8                           758      
+000026F8                           759  *-------------------------------------------------------
+000026F8                           760  *-------------------Data Delarations--------------------
+000026F8                           761  *-------------------------------------------------------
+000026F8                           762  
+000026F8= 0D 0A 00                 763  crlf:           dc.b    $0D,$0A,0
+000026FB= 2A 2A 2A 2A 2A 2A ...    764  welcome_msg:    dc.b   '********************************************************************************',$0D,$0A       
+0000274D= 20 5F 5F 5F 5F 5F ...    765                  dc.b   ' _____        _               _          __  __  _  _  _  _      '  ,$0D,$0A
+00002790= 7C 20 20 5F 5F 20 ...    766                  dc.b   '|  __ \      (_)             | |        |  \/  |(_)| |(_)| |  ',$0D,$0A
+000027D0= 7C 20 7C 5F 5F 29 ...    767                  dc.b   '| |__) |_ __  _ __   __ __ _ | |_  ___  | \  / | _ | | _ | |_   _ _  _ _  _   _ -',$0D,$0A
+00002823= 7C 20 20 5F 5F 5F ...    768                  dc.b   '|  ___/|  __|| |\ \ / // _` || __|/ _ \ | |\/| || || || || __|/ _` || __|| | | |',$0D,$0A
+00002875= 7C 20 7C 20 20 20 ...    769                  dc.b   '| |    | |   | | \ V /| (_| || |_|  __/ | |  | || || || || |_| (_| || |  | |_| |',$0D,$0A
+000028C7= 7C 5F 7C 20 20 20 ...    770                  dc.b   '|_|    |_|   |_|  \_/  \__,_| \__|\___| |_|  |_||_||_||_| \__|\__,_||_|   \__, |',$0D,$0A
+00002919= 20 20 20 20 20 20 ...    771                  dc.b    '                                                                          __/ /',$0D,$0A
+0000296A= 20 20 20 20 20 20 ...    772                  dc.b    '                                                                         |___/',$0D,$0A
+000029BA= 57 65 6C 63 6F 6D ...    773                  dc.b    'Welcome to Private Military Simulator',$0D,$0A
+000029E1= 2A 2A 2A 2A 2A 2A ...    774                  dc.b    '********************************************************************************',$0D,$0A
+00002A33= 57 68 65 72 65 20 ...    775                  dc.b    'Where you lead and control a Private Military Company or for short PMCs.',$0D,$0A
+00002A7D= 59 6F 75 72 20 6A ...    776                  dc.b    'Your job is to create havoc or create peace for a price.',$0D,$0A
+00002AB7= 54 72 61 69 6E 20 ...    777                  dc.b    'Train men to their fullest potential to have the',$0D,$0A
+00002AE9= 73 74 72 6F 6E 67 ...    778                  dc.b    'strongest Private Military Company. Upgrade your weapons',$0D,$0A
+00002B23= 61 6E 64 20 6D 69 ...    779                  dc.b    'and military might through technologies or buying equipments.',$0D,$0A
+00002B62= 45 61 72 6E 69 6E ...    780                  dc.b    'Earning funds for your PMC is by taking Agency missions',$0D,$0A
+00002B9B= 6F 72 20 62 79 20 ...    781                  dc.b    'or by selling and arming rebels or terrorist cells in different countries.',$0D,$0A
+00002BE7= 2A 2A 2A 2A 2A 2A ...    782                  dc.b    '********************************************************************************',$0D,$0A
+00002C39= 20 20 20 20 20 20 ...    783                  dc.b    '                                  Press enter                                   ',0
+00002C8A= 2A 2A 2A 2A 2A 2A ...    784  name_msg:       dc.b    '********************************************************************************',$0D,$0A 
+00002CDC= 54 79 70 65 3A 20 ...    785                  dc.b    'Type:    Country code:     Citizen of XXXXXXX XX XXXXX         Passport No:     ',$0D,$0A 
+00002D2E= 58 20 20 20 20 20 ...    786                  dc.b    'X        XXX                                                   XX329546'
+00002D75= 20 20 20 20 20 20 ...    787                  dc.b    '                                Passport Details                             ',$0D,$0A,$0D,$0A
+00002DC6= 47 69 76 65 6E 20 ...    788                  dc.b    'Given First Name: ',0
+00002DD9= 47 69 76 65 6E 20 ...    789  passport_msg:   dc.b    'Given Surname: XXXXXXXX',$0D,$0A
+00002DF2= 44 61 74 65 20 6F ...    790                  dc.b    'Date of Birth: XX/XX/XXXX      Record No: XXXXXXXXXXX',$0D,$0A 
+00002E29= 4E 61 74 69 6F 6E ...    791                  dc.b    'Nationality: XXXXXXX',$0D,$0A 
+00002E3F= 53 45 58 20 4D 2F ...    792                  dc.b    'SEX M/F: X     Place of Birth: XXXXXX,XXXXX',$0D,$0A 
+00002E6C= 44 61 74 65 20 69 ...    793                  dc.b    'Date issue: XX/XX/XXXX         Authority: XXXXX',$0D,$0A
+00002E9D= 44 61 74 65 20 6F ...    794                  dc.b    'Date of expiry: XX/XX/XXXX',$0D,$0A 
+00002EB9= 2A 2A 2A 2A 2A 2A ...    795  company_msg:    dc.b   '********************************************************************************',$0D,$0A 
+00002F0B= 20 20 20 20 20 20 ...    796                  dc.b    '                          XXXXXXXXXXXXXXXXXXXXXX                        ',$0D,$0A
+00002F55= 20 20 20 20 20 20 ...    797                  dc.b    '                  Voluntary certification system <<XXXXXXXXX>>          ',$0D,$0A
+00002F9F= 20 20 69 73 20 72 ...    798                  dc.b    '  is registered with the federal agency of technical regulation and metrology',$0D,$0A 
+00002FEE= 20 20 43 65 6E 74 ...    799                  dc.b    '  Central certification body LLC <<Independent Certificaion Center <<Alliance>>',$0D,$0A
+0000303F= 20 20 20 20 20 20 ...    800                  dc.b    '         Address: X XXXXXXXXXXX  XX, XXXXXXX, 5X, XXXXXXXX.13208,XXXXXXX       ',$0D,$0A
+00003090= 20 20 20 20 20 20 ...    801                  dc.b    '                           CONFORMANCE CERTIFICATE                      ',$0D,$0A
+000030DA= 20 20 20 20 20 20 ...    802                  dc.b    '                         NO SMK.XX/XX.XX - 00172/00554                  ',$0D,$0A
+00003124= 20 20 20 20 20 20 ...    803                  dc.b    '                               Granted to:                              ',$0D,$0A
+0000316E= 20 20 20 20 20 20 ...    804                  dc.b    '                            ',0
+0000318B= 20 20 20 20 20 20 ...    805  certificate_msg: dc.b   '            56,XXXXXXX Rd, Third Floor, XXXX City,XXXXXX, XXXXXXXXX     ',$0D,$0A             
+000031D5= 20 20 20 20 20 20 ...    806                  dc.b    '                           Register Number 82,630                       ',$0D,$0A 
+0000321F= 20 20 20 20 20 20 ...    807                  dc.b    '                        THIS CERTIFICATE CERTIFIES THAT:                ',$0D,$0A
+00003269= 20 20 20 20 20 20 ...    808                  dc.b    '                         THE QUALITY MANAGEMENT SYSTEM                  ',$0D,$0A
+000032B3= 20 20 20 20 20 20 ...    809                  dc.b    '                                 as applied to                                       ',$0D,$0A
+0000330A= 6D 61 72 69 74 69 ...    810                  dc.b    'maritime security, including arm security of the merchant fleet and escorting   ',$0D,$0A
+0000335C= 70 72 6F 74 65 63 ...    811                  dc.b    'protection of sea ports, protection of sea platforms and pipelines, installation',$0D,$0A
+000033AE= 6F 66 20 73 70 65 ...    812                  dc.b    'of special equipment on vessels boards in the condition of piracy activity, land',$0D,$0A                                                                    ',$0D,$0A
+00003400= 73 65 63 75 72 69 ...    813                  dc.b    'security, including armed guaeding of stationary objects, oil and gas pipelines,',$0D,$0A
+00003452= 70 68 79 73 69 63 ...    814                  dc.b    'physical persons, cargoes convoy; demining; consultion services and audit in    ',$0D,$0A
+000034A4= 73 65 63 75 72 69 ...    815                  dc.b    'security affairs; security training of personnel for land and sea operations.   ',$0D,$0A
+000034F6= 2A 2A 2A 2A 2A 2A ...    816                  dc.b    '********************************************************************************',$0d,$0A
+00003548= 20 20 20 20 20 20 ...    817                  dc.b    '                                 Press Enter                                    ',0
+00003599= 26 2C 2C 2C 2C 2C ...    818  location_msg:   dc.b    '&,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,&',$0d,$0A
+000035EB= 25 2A 2E 2E 2E 2E ...    819                  dc.b    '%*.....#.  **                  ,      ...,,..  ,. .*         ..        (       %',$0d,$0A
+0000363D= 25 2E 2A 2E 2A 28 ...    820                  dc.b    '%.*.*(...........,.    ..               (...,(         (                    *( %',$0d,$0A
+0000368F= 25 2E 2E 2E 2E 2E ...    821                  dc.b    '%........(...* ,((.  3.Syria     (                      ((.            (    .  %',$0d,$0A
+000036E1= 25 2A 2E 2E 2E 2E ...    822                  dc.b    '%*................ (             ,           2.Iran                   (      . %',$0d,$0A
+00003733= 25 20 23 2E 2E 2E ...    823                  dc.b    '% #............./%    #                                              #         %',$0d,$0A
+00003785= 25 20 20 20 20 20 ...    824                  dc.b    '%     ## , %...#&          1.Iraq /                     ,          *         . %',$0d,$0A
+000037D7= 25 20 20 20 20 20 ...    825                  dc.b    '%          .    *                                                /          (  %',$0d,$0A
+00003829= 25 20 20 20 20 20 ...    826                  dc.b    '%              (  (,        .(      *                          *.          *   %',$0d,$0A
+0000387B= 25 20 20 20 20 20 ...    827                  dc.b    '%           * #               .,,.. *...*                 ,             /.     %',$0d,$0A
+000038CD= 25 20 20 20 20 20 ...    828                  dc.b    '%            ...                     ....#                  *           ,      %',$0d,$0A
+0000391F= 25 20 20 20 20 20 ...    829                  dc.b    '%            (...                     #.....     ,(         (                  %',$0d,$0A
+00003971= 25 20 20 20 20 20 ...    830                  dc.b    '%             *...                      ##.,,,*..*,.          ((/*(..    .*    %',$0d,$0A
+000039C3= 25 20 20 20 20 20 ...    831                  dc.b    '%              ...#                     ( ....** ,#**...,............*/        %',$0d,$0A
+00003A15= 25 20 2E 28 2E 20 ...    832                  dc.b    '% .(.          ......                     .#        .(*/*........(......(    , %',$0d,$0A
+00003A67= 25 20 20 20 20 20 ...    833                  dc.b    '%          ,     ....                      ,(,  ,       #..*//./..........% #. %',$0d,$0A
+00003AB9= 25 20 20 20 20 20 ...    834                  dc.b    '%                /...                            *     *.,..............*(*... %',$0d,$0A
+00003B0B= 25 20 20 20 20 20 ...    835                  dc.b    '%                (*...#                              *,..(*(*.....*........... %',$0d,$0A
+00003B5D= 25 20 20 20 20 20 ...    836                  dc.b    '%                #......                     /       (...*........*........*.. %',$0d,$0A
+00003BAF= 25 20 20 20 20 20 ...    837                  dc.b    '%                 */.*..(            ./            (.................**,**.... %',$0d,$0A
+00003C01= 25 20 20 20 20 20 ...    838                  dc.b    '%              .    .(.... *( (             .    ...........................*. %',$0d,$0A
+00003C53= 25 20 20 20 20 20 ...    839                  dc.b    '%                   *@....,                 .......................#(*........ %',$0d,$0A
+00003CA5= 25 20 20 20 20 20 ...    840                  dc.b    '%             (.* (%* .,..(             ,%(**.............(................... %',$0d,$0A
+00003CF7= 25 20 20 20 20 20 ...    841                  dc.b    '%            (         , ..        #*.....................*.........         ( %',$0d,$0A
+00003D49= 25 20 20 20 20 20 ...    842                  dc.b    '%                        ( .*...,..,,.........#(.*.................. .,,    ,( %',$0d,$0A
+00003D9B= 25 2C 2C 2C 2C 2C ...    843                  dc.b    '%,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,%',$0d,$0A,0
+00003DEE= 20 20 20 20 20 20 ...    844  location_text:  dc.b    '                 Pick your starting point: 1. Iraq 2. Iran 3. Syria           ',$0d,$0A
+00003E3E= 2A 2A 2A 2A 2A 2A ...    845                  dc.b    '********************************************************************************',$0d,$0A,0
+00003E91= 2A 2A 2A 2A 2A 2A ...    846  Iraq_msg:       dc.b    '********************************************************************************',$0d,$0A
+00003EE3= 20 20 20 20 20 20 ...    847                  dc.b    '                      Welcome to the to the nation of Iraq.                     ',$0d,$0A  
+00003F35= 20 20 20 20 20 20 ...    848                  dc.b    '           You have landed in the aitport, you went to the city/town centre.    ',$0d,$0A,0
+00003F88= 2A 2A 2A 2A 2A 2A ...    849  Iran_msg:       dc.b    '********************************************************************************',$0d,$0A
+00003FDA= 20 20 20 20 20 20 ...    850                  dc.b    '                      Welcome to the to the nation of Iran.                     ',$0d,$0A
+0000402C= 20 20 20 20 20 20 ...    851                  dc.b    '           You have landed in the aitport, you went to the city/town centre.    ',$0d,$0A,0                
+0000407F= 2A 2A 2A 2A 2A 2A ...    852  Syria_msg:      dc.b    '********************************************************************************',$0d,$0A
+000040D1= 20 20 20 20 20 20 ...    853                  dc.b    '                        Welcome to thee nation of Syria.                        ',$0d,$0A
+00004123= 20 20 20 20 20 20 ...    854                  dc.b    '         You have landed on the air strip, you went to the city/town centre.    ',$0d,$0A,0
+00004176= 20 20 20 20 20 20 ...    855  startStats_msg: dc.b    '                      You Currently have $2000 marked money.                    ',$0d,$0A
+000041C8= 20 20 20 20 20 20 ...    856                  dc.b    '                       You Currently have 50 trained men.                       ',$0d,$0A
+0000421A= 20 20 20 20 20 20 ...    857                  dc.b    '                    This is the starting point of your PMC.                     ',$0d,$0A
+0000426C= 20 20 20 20 20 20 ...    858                  dc.b    '                               Create History.                                  ',$0d,$0A
+000042BE= 20 20 20 20 20 20 ...    859                  dc.b    '                            Create Peace or Chaos.                              ',$0d,$0A
+00004310= 20 20 20 20 20 20 ...    860                  dc.b    '                            Be Famous or infamous.                              ',$0d,$0A
+00004362= 20 20 20 20 20 20 ...    861                  dc.b    '                         Your future is in your hand                            ',$0d,$0A
+000043B4= 2A 2A 2A 2A 2A 2A ...    862                  dc.b    '********************************************************************************',$0d,$0A
+00004406= 20 20 20 20 20 20 ...    863                  dc.b    '                                   Press Enter                                  ',$0d,$0A,0
+00004459= 2A 2A 2A 2A 2A 2A ...    864  town_msg:       dc.b    '********************************************************************************',$0d,$0A
+000044AB= 20 20 20 20 20 20 ...    865                  dc.b    '                       Welcome to the city/town centre.                         ',$0D,$0A
+000044FD= 2A 2A 2A 2A 2A 2A ...    866                  dc.b    '********************************************************************************',$0d,$0A
+0000454F= 2B 49 3F 3F 49 2B ...    867                  dc.b    '+I??I+?+||~~~~~I|000000000???=000000???+,000000000000I??????????????????????????',$0D,$0A
+000045A1= 3F 2B 3F 3F 3F 3F ...    868                  dc.b    '?+????+?+|||~~~~~|~000000|||||||||:=:I_____0000000000.?????????????????????????',$0D,$0A
+000045F2= 2B 3F 2B 3F 49 3F ...    869                  dc.b    '+?+?I??+?+||||~~~~~|=00:|||||||||=000|11111|000000000000????????????????????????',$0D,$0A
+00004644= 3F 2B 3F 2B 49 3F ...    870                  dc.b    '?+?+I???+?+|||||~~~~~|,000I|||||00.00|11111|?:0=00000000=???????????????????????',$0D,$0A
+00004696= 2B 3F 3D 49 3F 49 ...    871                  dc.b    '+?=I?I?+?+|||||||+?~~~=|000,||,.00000|11111|000?~000000?????????????????????????',$0D,$0A
+000046E8= 3F 2B 49 2B 3F 3F ...    872                  dc.b    '?+I+????+I+I=||||||00~~~=|00:000,00=I0-----000=000,I,????________???????????????',$0D,$0A
+0000473A= 49 3F 3F 3F 2B 3F ...    873                  dc.b    'I???+????+?:000=,||||=0~~0|00~0=00.?.+~,00000.000000?___|44444444|??????????????',$0D,$0A
+0000478C= 3F 3F 3F 2B 3F 2B ...    874                  dc.b    '???+?+?????,000000=00||~~~~||.0000?=0000,00000:00000|4444444444|_???????????????',$0D,$0A
+000047DE= 3F 3F 3F 3F 2B 3F ...    875                  dc.b    '????+?+??______00000000|I~~~~|00?00000=,0,0,000:.0??|444444444444|??????????????',$0D,$0A
+00004830= 3F 2B 3F 3F 3F 2B ...    876                  dc.b    '?+???+?+|333333|__00000?|~~~~~~|I0000,=____=000000.?|4444444444|_???????????????',$0D,$0A
+00004882= 3F 3F 3F 2B 3F 3F ...    877                  dc.b    '???+???_|333333333|_00~~00|~~~~~|.+?00|2222|____00I??---|44444444|??????????????',$0D,$0A
+000048D4= 3F 3F 3F 3F 3F 3F ...    878                  dc.b    '??????|3333333333333|_?0000||=~~~|????|2222222||?.???????--------???????????????',$0D,$0A
+00004926= 3F 3F 3D 3F 3F 49 ...    879                  dc.b    '??=??I?|33333333333333|000000|?~~~|???|2222222||???+=?????????????????????I~????',$0D,$0A
+00004978= 3F 3F 2B 3F 49 49 ...    880                  dc.b    '??+?II+?--------------0000000======???|---------00.??????????????????=I?????????',$0D,$0A
+000049CA= 3F 3D 49 3F 3F 3F ...    881                  dc.b    '?=I?????I????????I00?I0000000|~~~~|????.=??????.00000000000:I???????????????????',$0D,$0A
+00004A1C= 3F 2B 3F 3F 3F 2B ...    882                  dc.b    '?+???+I???+??????????000000000|~~~~|????????I000000000000000000,I???????????????',$0D,$0A
+00004A6E= 2B 3F 3F 3F 3F 2B ...    883                  dc.b    '+????+II?+???????????0000000000|~~~|?????????00000000000000000=I????????????????',$0D,$0A
+00004AC0= 3F 3F 3F 49 2B 3F ...    884                  dc.b    '???I+?????????+?????=000000========+???????=0000000000000000??+?????????????????',$0D,$0A
+00004B12= 3F 3F 3F 3F 2B 3F ...    885                  dc.b    '????+??I+??I??+I????00000000|~~~~~~~|????I~00000000000000.??~???????????????????',$0D,$0A
+00004B64= 3F 3F 49 3D 3F 3F ...    886                  dc.b    '??I=?????II???+?+?????|==000=000~~|00000000000=.I??I?,??????????????????????????',$0D,$0A
+00004BB6= 2A 2A 2A 2A 2A 2A ...    887                  dc.b    '********************************************************************************',$0d,$0A
+00004C08= 41 63 74 69 6F 6E ...    888                  dc.b    'Actions: 1. Hospital, 2. Black market 3. Contractors office 4. Leave town       ',$0D,$0A
+00004C5A= 41 63 74 69 6F 6E ...    889                  dc.b    'Actions: 5. check Inventory      ',$0D,$0A
+00004C7D= 2A 2A 2A 2A 2A 2A ...    890                  dc.b    '********************************************************************************',$0d,$0A,0
+00004CD0= 20 20 20 20 20 20 ...    891  hospital_msg    dc.b    '                                               _________________                ',$0d,$0A
+00004D22= 20 20 20 20 20 20 ...    892                  dc.b    '                                              /_________________\               ',$0d,$0A
+00004D74= 20 20 20 20 20 20 ...    893                  dc.b    '                                              |====#=#===#=#====|               ',$0d,$0A
+00004DC6= 20 20 20 20 20 5F ...    894                  dc.b    '     _________________________________________|       +H+       |               ',$0d,$0A
+00004E18= 20 20 20 20 2F 20 ...    895                  dc.b    '    /                                         |_____________    |               ',$0d,$0A
+00004E6A= 20 20 20 2F 5F 5F ...    896                  dc.b    '   /________________________________________________________\   |               ',$0d,$0A
+00004EBC= 20 20 20 7C 20 20 ...    897                  dc.b    '   |  [+] [+] [+] [+] [+] [+]  [+] [+] [+] [+] [+] [+] [+]  |   |               ',$0d,$0A
+00004F0E= 20 20 3A 3D 3D 3D ...    898                  dc.b    '  :==============================================================:|             ',$0d,$0A
+00004F60= 20 20 7C 20 5B 2B ...    899                  dc.b    '  | [+] [+] [+] [+] [+] [+] [+]  [+] [+] [+] [+] [+] [+] [+] [+] ||             ',$0d,$0A
+00004FB2= 20 20 7C 2D 2D 2D ...    900                  dc.b    '  |--------------------------------------------------------------||             ',$0d,$0A
+00005004= 20 20 7C 20 5B 2B ...    901                  dc.b    '  | [+] [+]:[+]:[+]:[+]:[+] [+]  [+] [+] [+] [+] [+] [+] [+] [+] ||             ',$0d,$0A
+00005056= 20 20 7C 20 20 20 ...    902                  dc.b    '  |        :::::::::::::                                         ||             ',$0d,$0A
+000050A8= 20 20 7C 20 5B 2B ...    903                  dc.b    '  | [+] [+]:[+]:[+]:[+]:[+] [+]  ( ) [+] [+] [+] [+] [+] [+] [+] ||             ',$0d,$0A
+000050FA= 20 20 7C 20 20 20 ...    904                  dc.b    '  |         :::::::::::(  )      (   )                           ||             ',$0d,$0A
+0000514C= 20 20 28 29 5B 2B ...    905                  dc.b    '  ()[+] ()]:[():[():[( )  ) [( |     )+] [+] [+] [+] [+] [+] [+] ||             ',$0d,$0A
+0000519E= 20 20 28 20 20 29 ...    906                  dc.b    '  (  )  (  ):( ))(  )(      )(  |   )  )  ( ) ()  ( )        (  ))|             ',$0d,$0A
+000051F0= 20 20 28 20 20 20 ...    907                  dc.b    '  (   )(   ))( )( ( ) (   )  )  | (     )(  )(  )(   )[+] [+]( (  ))            ',$0d,$0A
+00005242= 20 20 28 20 29 29 ...    908                  dc.b    '  ( ))  (  )( ( )(  )(  (   ) ( |   )  )(    )  )( ) )---:::::(  ) )            ',$0d,$0A
+00005294= 20 20 3D 3D 3D 3D ...    909                  dc.b    '  ============================= | (  )    ( ) )   ( )    ::::::( )              ',$0d,$0A
+000052E6= 20 20 2D 2D 2D 2D ...    910                  dc.b    '  -----------------------------=====================================            ',$0d,$0A
+00005338= 2A 2A 2A 2A 2A 2A ...    911                  dc.b    '********************************************************************************',$0d,$0A
+0000538A= 59 6F 75 20 68 61 ...    912                  dc.b    'You have entered the hospital and you see an abundance of medical supplies',$0D,$0A
+000053D6= 2A 2A 2A 2A 2A 2A ...    913                  dc.b    '********************************************************************************',$0d,$0A
+00005428= 54 68 65 20 68 6F ...    914                  dc.b    'The hospital stocks: 1.Bandages($40), 2.Pills($60) 3.Medkits($100) 4. Leave',$0D,$0A,0
+00005476= 20 20 20 20 20 20 ...    915  BlackMarket_msg dc.b    '                     _._._                       _._._                     ',$0D,$0A
+000054C3= 20 20 20 20 20 20 ...    916                  dc.b    '                    _|   |_                     _|   |_                    ',$0D,$0A
+00005510= 20 20 20 20 20 20 ...    917                  dc.b    '                    | ... |_._._._._._._._._._._| ... |                    ',$0D,$0A
+0000555D= 20 20 20 20 20 20 ...    918                  dc.b    '                    | ||| |  o  Black Market o  | ||| |                    ',$0D,$0A
+000055AA= 20 20 20 20 20 20 ...    919                  dc.b    '                    | """ |  """    """    """  | """ |                    ',$0D,$0A
+000055F7= 20 20 20 20 20 20 ...    920                  dc.b    '               ())  |[-|-]| [-|-]  [-|-]  [-|-] |[-|-]|  ())               ',$0D,$0A
+00005644= 20 20 20 20 20 20 ...    921                  dc.b    '              (())) |     |---------------------|     | (()))              ',$0D,$0A
+00005691= 20 20 20 20 20 20 ...    922                  dc.b    '             (())())| """ |  """    """    """  | """ |(())())             ',$0D,$0A
+000056DE= 20 20 20 20 20 20 ...    923                  dc.b    '             (()))()|[-|-]|  :::   .-"-.   :::  |[-|-]|(()))()             ',$0D,$0A
+0000572B= 20 20 20 20 20 20 ...    924                  dc.b    '             ()))(()|     | |~|~|  |_|_|  |~|~| |     |()))(()             ',$0D,$0A
+00005778= 20 20 20 20 20 20 ...    925                  dc.b    '                ||  |_____|_|_|_|__|_|_|__|_|_|_|_____|  ||                ',$0D,$0A
+000057C5= 2A 2A 2A 2A 2A 2A ...    926                  dc.b    '********************************************************************************',$0d,$0A
+00005817= 59 6F 75 20 68 61 ...    927                  dc.b    'You have entered the Black Market and see alot of weapons',$0D,$0A
+00005852= 2A 2A 2A 2A 2A 2A ...    928                  dc.b    '********************************************************************************',$0d,$0A
+000058A4= 42 6C 61 63 6B 20 ...    929                  dc.b    'Black Market stock: 1.AK47s($50), 2.M4($120)3.Sniper rife($150) or 4. Leave',$0D,$0A
+000058F1= 2A 2A 2A 2A 2A 2A ...    930                  dc.b    '********************************************************************************',$0d,$0A,0
+00005944                           931  contractors_msg: 
+00005944= 20 20 20 20 20 20 ...    932                  dc.b '                 ^                   |~                                              ',$0d,$0A
+0000599B= 20 20 20 20 20 20 ...    933                  dc.b '               ^     ^  ^        _|__|__|_           ^   ^                           ',$0d,$0A
+000059F2= 20 20 20 20 20 20 ...    934                  dc.b '                 ___________    _|  | |  |_    ___________   ^                       ',$0d,$0A
+00005A49= 20 20 20 20 20 20 ...    935                  dc.b '                (__IXIXIXIXI___|_|__|_|__|_|___IXIXIXIXI__)                          ',$0d,$0A
+00005AA0= 20 20 20 20 20 20 ...    936                  dc.b '                (__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)                          ',$0d,$0A
+00005AF7= 20 20 20 20 20 20 ...    937                  dc.b '                (__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)                           ',$0d,$0A
+00005B4F= 20 20 20 20 20 20 ...    938                  dc.b '                (__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)                          ',$0d,$0A
+00005BA6= 20 20 20 20 20 20 ...    939                  dc.b '                (__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)                          ',$0d,$0A
+00005BFD= 20 20 20 20 20 20 ...    940                  dc.b '                (__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)                          ',$0d,$0A
+00005C54= 20 20 20 20 20 20 ...    941                  dc.b '              /)(__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)                          ',$0d,$0A
+00005CAB= 20 20 20 20 20 20 ...    942                  dc.b '            _/ )(__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)_/)_                      ',$0d,$0A
+00005D02= 20 20 20 20 20 20 ...    943                  dc.b '             ~^^(__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__) ~~^                      ',$0d,$0A
+00005D59= 20 20 20 20 20 20 ...    944                  dc.b '            ^~~ (__|"|"|"|"| [=][=] [=] [=][=] |"|"|"|"|__)~~^                       ',$0d,$0A
+00005DB0= 20 20 20 20 20 20 ...    945                  dc.b '           """""IXI~IXI~IXI~IXI~=I=I=I=I=~IXI~IXI~IXI~IXI""""""                      ',$0d,$0A
+00005E07= 20 20 20 20 20 20 ...    946                  dc.b '               """"""""""""""""""|   |""""""""""""""""""                             ',$0d,$0A
+00005E5E= 2A 2A 2A 2A 2A 2A ...    947                  dc.b    '********************************************************************************',$0d,$0A
+00005EB0= 59 6F 75 20 65 6E ...    948                  dc.b    'You enter the contractors office and see brunch of paper work on the desk',$0D,$0A
+00005EFB= 2A 2A 2A 2A 2A 2A ...    949                  dc.b    '********************************************************************************',$0d,$0A
+00005F4D= 20 20 20 20 20 20 ...    950                  dc.b    '                             1. Recruit men 2. Leave                            ',$0D,$0A,0
+00005FA0= 0D 0A 20 20 20 20 ...    951  recruit_msg:    dc.b    $0D,$0A,'              How many Contractors do you want? ($100 for 100)          ',$0D,$0A
+00005FEC= 2A 2A 2A 2A 2A 2A ...    952                  dc.b    '********************************************************************************',$0d,$0A,0
+0000603F= 20 20 20 20 20 20 ...    953  action_msg      dc.b    '                           1.Move out 2.Back to town.                           ',$0D,$0A
+00006091= 2A 2A 2A 2A 2A 2A ...    954                  dc.b    '********************************************************************************',$0d,$0A,0
+000060E4= 0D 0A 4D 6F 6E 65 ...    955  money_msg       dc.b    $0D,$0A,'Money: ',0
+000060EE= 0D 0A 48 65 61 6C ...    956  health_msg      dc.b    $0D,$0A,'Health: ',0
+000060F9= 0D 0A 4D 69 67 68 ...    957  might_msg       dc.b    $0D,$0A,'Might: ',0
+00006103= 0D 0A 4D 65 64 69 ...    958  medical_msg     dc.b    $0D,$0A,'Medical Supply: ',0
+00006116= 0D 0A 57 65 61 70 ...    959  weapons_msg     dc.b    $0D,$0A,'Weapon Supply: ',0
+00006128= 0D 0A 42 61 6E 64 ...    960  item1_msg       dc.b    $0D,$0A,'Bandage Supply: ',0
+0000613B= 0D 0A 50 69 6C 6C ...    961  item2_msg       dc.b    $0D,$0A,'Pill Supply: ',0
+0000614B= 0D 0A 4D 65 64 6B ...    962  item3_msg       dc.b    $0D,$0A,'Medkits Supply: ',0
+0000615E= 0D 0A 41 6B 2D 34 ...    963  item4_msg       dc.b    $0D,$0A,'Ak-47Supply: ',0
+0000616E= 0D 0A 4D 34 20 53 ...    964  item5_msg       dc.b    $0D,$0A,'M4 Supply: ',0
+0000617C= 0D 0A 53 6E 69 70 ...    965  item6_msg       dc.b    $0D,$0A,'Sniper rifes Supply: ',0
+00006194= 0D 0A 31 2E 55 73 ...    966  inventory_msg   dc.b    $0D,$0A,'1.Use 2.Back'
+000061A2= 0D 0A 00                 967                  dc.b    $0D,$0A,0
+000061A5= 0D 0A 20 20 20 20 ...    968  bandage_msg:    dc.b    $0D,$0A,'                    How many Bandage do you want? ($40 each)            ',$0D,$0A,0
+000061F2= 0D 0A 20 20 20 20 ...    969  pills_msg:      dc.b    $0D,$0A,'                    How many Pills do you want? ($60 each)             ',$0D,$0A,0
+0000623E= 0D 0A 20 20 20 20 ...    970  medkits_msg:    dc.b    $0D,$0A,'                    How many Medkits do you want? ($100 each)           ',$0D,$0A,0
+0000628B= 0D 0A 20 20 20 20 ...    971  ak47_msg:       dc.b    $0D,$0A,'                    How many AK-47s do you want? ($40 each)             ',$0D,$0A,0
+000062D8= 0D 0A 20 20 20 20 ...    972  m4_msg:         dc.b    $0D,$0A,'                    How many M4s do you want? ($100 each)               ',$0D,$0A,0
+00006325= 0D 0A 20 20 20 20 ...    973  sniper_msg:     dc.b    $0D,$0A,'                    How many Sniper rifes do you want? ($150 each)      ',$0D,$0A,0 
+00006372= 0D 0A 31 2E 42 61 ...    974  choice_msg:     dc.b    $0D,$0A,'1.Bandage(50HP) 2.Pills(100HP) 3.Medkits(150HP) 4.AK47(50MP) 5.M4(100MP)'
+000063BC= 0D 0A 36 2E 53 6E ...    975                  dc.b    $0D,$0A,'6.Sniper rife (150MP)'
+000063D3= 0D 0A 00                 976                  dc.b    $0D,$0A,0
+000063D6= 0D 0A 48 6F 77 20 ...    977  consumption_msg: dc.b   $0D,$0A,'How many item do you want to consumption',$0D,$0A,0
+00006403= 0D 0A 20 20 20 20 ...    978  gameplay_msg    dc.b    $0D,$0A,'                             No Gameplay of combat                      ' ,$0D,$0A,0 
+00006450= 0D 0A 4C 6F 6F 70 ...    979  loop_msg        dc.b    $0D,$0A,'Loop',$0D,$0A,0 
+00006459                           980  
+00006459                           981      end start
 
 No errors detected
 No warnings generated
@@ -608,74 +991,93 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-ACTION_MSG          4E7B
-BLACKMARKET_MSG     4D55
+ACTION_MSG          603F
+AK47                230C
+AK47_MSG            628B
+BANDAGES            2238
+BANDAGE_MSG         61A5
+BLACKMARKET_MSG     5476
 BLACK_MARKET        2
-CERTIFICATE_MSG     3E05
-CLEAR_SCREEN        332E
-COLLISION           32D4
-COLLISION_HIT       32E0
-COLLISION_MISS      32EE
-COMPANY_MSG         3B33
-COMPANY_NAME        7000
+CERTIFICATE_MSG     318B
+CHOICE_MSG          6372
+CLEAR_SCREEN        26CA
+COMPANY_MSG         2EB9
+COMPANY_NAME        9500
+CONSUMPTION         2560
+CONSUMPTION_MSG     63D6
 CONTRACTORS         3
-CONTRACTORS_MISSION_MSG  4E43
-CONTRACTORS_MSG     4DFB
-CRLF                3372
-DECORATE            3310
-DRAW                307C
-DRAW_MSG            4ED0
-END                 3006
-ENDL                335C
+CONTRACTORS_MSG     5944
+CRLF                26F8
+DISPLAY_STAT        242E
+END                 2006
+ENDL                26E2
 EXIT                0
-GAME                3000
-GAMELOOP            3038
-GAMEPLAY            328E
-GAMEPLAY_MSG        4EAF
-HEALTH              4F26
-HIT_MSG             4EDE
+GAME                2000
+GAMELOOP            20B0
+GAMEPLAY            269C
+GAMEPLAY_MSG        6403
+HEALTH_MSG          60EE
 HOSPITAL            1
-HOSPITAL_MSG        4CA6
-HUD                 32B2
-HUD_MSG             4F1C
-INPUT               3026
+HOSPITAL_MSG        4CD0
+INPUT               209E
+INVENTORY           24A8
+INVENTORY_MSG       6194
 IRAN                2
-IRAN_MSG            4B6B
+IRAN_MSG            3F88
 IRAQ                1
-IRAQ_MSG            4ABD
-LEAVE               3260
+IRAQ_MSG            3E91
+ITEM1_MSG           6128
+ITEM2_MSG           613B
+ITEM3_MSG           614B
+ITEM4_MSG           615E
+ITEM5_MSG           616E
+ITEM6_MSG           617C
+LEAVE               23F8
 LEAVETOWN           4
-LOCATION            30DC
-LOCATIONA           310E
-LOCATIONB           312E
-LOCATIONC           314E
-LOCATION_MSG        4213
-LOOP                32FC
-LOOP_MSG            4EEC
+LOCATION            210A
+LOCATIONA           2148
+LOCATIONB           216C
+LOCATIONC           2190
+LOCATION_MSG        3599
+LOCATION_TEXT       3DEE
+LOOP_MSG            6450
 LOSE_POINT          8
-MEDICAL_ITEMS_MSG   4CF4
+M4                  233C
+M4_MSG              62D8
+MEDICAL_MSG         6103
+MEDKITS             229A
+MEDKITS_MSG         623E
+MEDUSE1             25A2
+MEDUSE2             25CA
+MEDUSE3             25F4
+MIGHT_MSG           60F9
 MINE_LOC            64
-MISS_MSG            4EE6
-NAME                6000
-NAME_MSG            3904
-NEXT                3300
-OUT                 3318
-PASSPORT_MSG        3A53
-PLAYERNAME          3096
-REPLAY              333A
-REPLAY_MSG          4EEE
-SCORE               4F28
-SHOP1               31B4
-SHOP2               31EC
-SHOP3               3226
+MONEY_MSG           60E4
+NAME                9000
+NAME_MSG            2C8A
+OUT                 26B4
+PASSPORT_MSG        2DD9
+PILLS               2268
+PILLS_MSG           61F2
+PLAYERNAME          20C2
+RECRUIT             23D0
+RECRUIT_MSG         5FA0
+REPLAY              26D6
+SHOP1               21FA
+SHOP2               22CC
+SHOP3               23A0
+SNIPERRIFE          236E
+SNIPER_MSG          6325
 START               1000
+STARTSTATS_MSG      4176
 SYRIA               3
-SYRIA_MSG           4B93
-TOWN                3172
-TOWN_MSG            4C16
-UPDATE              3062
-UPDATE_MSG          4EBE
-WEAPON_ITEMS_MSG    4D91
-WELCOME             300A
-WELCOME_MSG         3375
+SYRIA_MSG           407F
+TOWN                21B4
+TOWN_MSG            4459
+WEAPONS_MSG         6116
+WEAPUSE1            261E
+WEAPUSE2            2648
+WEAPUSE3            2672
+WELCOME             200A
+WELCOME_MSG         26FB
 WIN_POINT           5
