@@ -122,14 +122,45 @@ draw:
     trap    #15
     bsr     decorate
     rts
+ 
+*-------------------------------------------------------
+*------------ Player name and Company name---------------
+*-------------------------------------------------------
+playerName:
+    bsr clear_screen
+    lea     name_msg,A1 ; creates the message
+    move.b  #14,D0 ; display the message
+    trap    #15 ; trap and interpret value in D0
     
+    lea     NAME,a1 
+    move.b  #2,D0 ; stops the message from continuing to the next msg
+    trap    #15 ; trap and interpret value in D0
+    
+    lea     passport_msg,A1 ; creates the message
+    move.b  #14,D0 ; display the message
+    trap    #15 ; trap and interpret value in D0
+    
+    lea     company_msg,a1
+    move.b  #2,D0 ; display the message
+    trap    #15 ; trap and interpret value in Dsg,
+
+    lea     certificate_msg,A1 ; creates the message
+    move.b  #14,D0 ; display the message
+    trap    #15 ; trap and interpret value in D0
+    
+    move.b #4,d0
+    trap    #15
+    
+
+
+    rts
+   
 *-------------------------------------------------------
 *--------------------Location---------------------------
 * where you staring place is
 *------------------------------------------------------- 
 location: 
     bsr     clear_screen 
-    bsr     decorate
     lea     location_msg,A1
     move.b  #14,D0
     trap    #15
@@ -141,7 +172,7 @@ location:
     cmp     #Iran, d1
     beq     LocationB
     cmp     #Syria,d1
-    beq     LocationC
+    beq     LocationC-
     bsr     location
     rts
 
@@ -314,32 +345,7 @@ Leave:
     bsr     clear_screen    clears the screen
     
     
-*-------------------------------------------------------
-*------------ layer name and Company name---------------
-*-------------------------------------------------------
-playerName:
-    bsr     decorate
-    bsr clear_screen
-    lea     name_msg,A1 ; creates the message
-    move.b  #14,D0 ; display the message
-    trap    #15 ; trap and interpret value in D0
-    
-    lea     NAME,a1 
-    move.b  #2,D0 ; stops the message from continuing to the next msg
-    trap    #15 ; trap and interpret value in D0
-        
-    lea     company_msg,a1
-    move.b  #14,D0 ; display the message
-    trap    #15 ; trap and interpret value in Dsg,
-    
-    move.b  #4,D0 ; stops the message from continuing to the next msg
-    trap    #15 ; trap and interpret value in D0
-    bsr     decorate
-    
-    
-    
-    rts
-*-------------------------------------------------------
+
 *-------------------------------------------------------
 *---Game Play (Quest Progress)--------------------------
 *------------------------------------------------------- 
@@ -455,56 +461,87 @@ endl:
 *-------------------------------------------------------
 
 crlf:           dc.b    $0D,$0A,0
-welcome_msg:    dc.b    '************************************************************************'
-                dc.b    $0D,$0A         
-                dc.b   ' _____        _               _          __  __  _  _  _  _      '  
-                dc.b    $0D,$0A               
-                dc.b   '|  __ \      (_)             | |        |  \/  |(_)| |(_)| |  '
-                dc.b    $0D,$0A
-                dc.b   '| |__) |_ __  _ __   __ __ _ | |_  ___  | \  / | _ | | _ | |_   _ _  _ _  _   _ -'
-                dc.b    $0D,$0A
-                dc.b   '|  ___/|  __|| |\ \ / // _` || __|/ _ \ | |\/| || || || || __|/ _` || __|| | | |'
-                dc.b    $0D,$0A
-                dc.b   '| |    | |   | | \ V /| (_| || |_|  __/ | |  | || || || || |_| (_| || |  | |_| |'
-                dc.b    $0D,$0A
-                dc.b   '|_|    |_|   |_|  \_/  \__,_| \__|\___| |_|  |_||_||_||_| \__|\__,_||_|   \__, |'
-                dc.b    $0D,$0A 
-                dc.b    '                                                                          __/ /'
-                dc.b    $0D,$0A 
-                dc.b    '                                                                         |___/'
-                dc.b    $0D,$0A
-                dc.b    'Welcome to Private Military Simulator'
-                dc.b    $0D,$0A
-                dc.b    '************************************************************************'
-                dc.b    $0D,$0A
-                dc.b    'Where you lead and control a Private Military Company or for short PMCs.'
-                dc.b    $0D,$0A
-                dc.b    'Your job is to create havoc or create peace for a price.'
-                dc.b    $0D,$0A
-                dc.b    'Train men to their fullest potential to have the'
-                dc.b    $0D,$0A
-                dc.b    'strongest Private Military Company. Upgrade your weapons'
-                dc.b    $0D,$0A
-                dc.b    'and military might through technologies or buying equipments.'
-                dc.b    $0D,$0A
-                dc.b    'Earning funds for your PMC is by taking Agency missions'
-                dc.b    $0D,$0A
-                dc.b    'or by selling and arming rebels or terrorist cells in different countries.'
-                dc.b    $0D,$0A
-                dc.b    '************************************************************************'
-                dc.b    $0D,$0A
-                dc.b    'Press enter.........'
-                dc.b    $0D,$0A,0
-name_msg:       dc.b    'What is your name?'
-                dc.b    $0D,$0A 
-                dc.b    '',0
-                dc.b    $0D,$0A 
-company_msg:    dc.b    'And your company name?'
-                dc.b    $0D,$0A
-                dc.b    '',0
-                dc.b    $0D,$0A,0
-location_msg:   dc.b    'Pick your starting point: 1. Iraq 2. Iran 3. Syria'
-                dc.b    $0D,$0A  
+welcome_msg:    dc.b   '********************************************************************************',$0D,$0A       
+                dc.b   ' _____        _               _          __  __  _  _  _  _      '  ,$0D,$0A
+                dc.b   '|  __ \      (_)             | |        |  \/  |(_)| |(_)| |  ',$0D,$0A
+                dc.b   '| |__) |_ __  _ __   __ __ _ | |_  ___  | \  / | _ | | _ | |_   _ _  _ _  _   _ -',$0D,$0A
+                dc.b   '|  ___/|  __|| |\ \ / // _` || __|/ _ \ | |\/| || || || || __|/ _` || __|| | | |',$0D,$0A
+                dc.b   '| |    | |   | | \ V /| (_| || |_|  __/ | |  | || || || || |_| (_| || |  | |_| |',$0D,$0A
+                dc.b   '|_|    |_|   |_|  \_/  \__,_| \__|\___| |_|  |_||_||_||_| \__|\__,_||_|   \__, |',$0D,$0A
+                dc.b    '                                                                          __/ /',$0D,$0A
+                dc.b    '                                                                         |___/',$0D,$0A
+                dc.b    'Welcome to Private Military Simulator',$0D,$0A
+                dc.b    '********************************************************************************',$0D,$0A
+                dc.b    'Where you lead and control a Private Military Company or for short PMCs.',$0D,$0A
+                dc.b    'Your job is to create havoc or create peace for a price.',$0D,$0A
+                dc.b    'Train men to their fullest potential to have the',$0D,$0A
+                dc.b    'strongest Private Military Company. Upgrade your weapons',$0D,$0A
+                dc.b    'and military might through technologies or buying equipments.',$0D,$0A
+                dc.b    'Earning funds for your PMC is by taking Agency missions',$0D,$0A
+                dc.b    'or by selling and arming rebels or terrorist cells in different countries.',$0D,$0A
+                dc.b    '********************************************************************************',$0D,$0A
+                dc.b    '                                  Press enter                                   ',0
+name_msg:       dc.b    '********************************************************************************',$0D,$0A 
+                dc.b    'Type:    Country code:     Citizen of XXXXXXX XX XXXXX         Passport No:     ',$0D,$0A 
+                dc.b    'X        XXX                                                   XX329546'
+                dc.b    '                                Passport Details                             ',$0D,$0A,$0D,$0A
+                dc.b    'Given First Name: ',0
+passport_msg:   dc.b    'Given Surname: XXXXXXXX',$0D,$0A
+                dc.b    'Date of Birth: XX/XX/XXXX      Record No: XXXXXXXXXXX',$0D,$0A 
+                dc.b    'Nationality: XXXXXXX',$0D,$0A 
+                dc.b    'SEX M/F: X     Place of Birth: XXXXXX,XXXXX',$0D,$0A 
+                dc.b    'Date issue: XX/XX/XXXX         Authority: XXXXX',$0D,$0A
+                dc.b    'Date of expiry: XX/XX/XXXX',$0D,$0A 
+company_msg:    dc.b   '********************************************************************************',$0D,$0A 
+                dc.b    '                          XXXXXXXXXXXXXXXXXXXXXX                        ',$0D,$0A
+                dc.b    '                  Voluntary certification system <<XXXXXXXXX>>          ',$0D,$0A
+                dc.b    '  is registered with the federal agency of technical regulation and metrology',$0D,$0A 
+                dc.b    '  Central certification body LLC <<Independent Certificaion Center <<Alliance>>',$0D,$0A
+                dc.b    '         Address: X XXXXXXXXXXX  XX, XXXXXXX, 5X, XXXXXXXX.13208,XXXXXXX       ',$0D,$0A
+                dc.b    '                           CONFORMANCE CERTIFICATE                      ',$0D,$0A
+                dc.b    '                         NO SMK.XX/XX.XX - 00172/00554                  ',$0D,$0A
+                dc.b    '                               Granted to:                              ',$0D,$0A
+                dc.b    '                            ',0
+certificate_msg: dc.b   '            56,XXXXXXX Rd, Third Floor, XXXX City,XXXXXX, XXXXXXXXX     ',$0D,$0A             
+                dc.b    '                           Register Number 82,630                       ',$0D,$0A 
+                dc.b    '                        THIS CERTIFICATE CERTIFIES THAT:                ',$0D,$0A
+                dc.b    '                         THE QUALITY MANAGEMENT SYSTEM                  ',$0D,$0A
+                dc.b    '                                 as applied to                                       ',$0D,$0A
+                dc.b    'maritime security, including arm security of the merchant fleet and escorting   ',$0D,$0A
+                dc.b    'protection of sea ports, protection of sea platforms and pipelines, installation',$0D,$0A
+                dc.b    'of special equipment on vessels boards in the condition of piracy activity, land',$0D,$0A                                                                    ',$0D,$0A
+                dc.b    'security, including armed guaeding of stationary objects, oil and gas pipelines,',$0D,$0A
+                dc.b    'physical persons, cargoes convoy; demining; consultion services and audit in    ',$0D,$0A
+                dc.b    'security affairs; security training of personnel for land and sea operations.   ',$0D,$0A
+                dc.b    '********************************************************************************',$0d,$0A
+                dc.b    '                                 Press Enter                                    ',0
+location_msg:   dc.b    '&,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,&',$0d,$0A
+                dc.b    '%*.....#.  **                  ,      ...,,..  ,. .*         ..        (       %',$0d,$0A
+                dc.b    '%.*.*(...........,.    ..               (...,(         (                    *( %',$0d,$0A
+                dc.b    '%........(...* ,((.  3.Syria     (                      ((.            (    .  %',$0d,$0A
+                dc.b    '%*................ (             ,           2.Iran                   (      . %',$0d,$0A
+                dc.b    '% #............./%    #                                              #         %',$0d,$0A
+                dc.b    '%     ## , %...#&          1.Iraq /                     ,          *         . %',$0d,$0A
+                dc.b    '%          .    *                                                /          (  %',$0d,$0A
+                dc.b    '%              (  (,        .(      *                          *.          *   %',$0d,$0A
+                dc.b    '%           * #               .,,.. *...*                 ,             /.     %',$0d,$0A
+                dc.b    '%            ...                     ....#                  *           ,      %',$0d,$0A
+                dc.b    '%            (...                     #.....     ,(         (                  %',$0d,$0A
+                dc.b    '%             *...                      ##.,,,*..*,.          ((/*(..    .*    %',$0d,$0A
+                dc.b    '%              ...#                     ( ....** ,#**...,............*/        %',$0d,$0A
+                dc.b    '% .(.          ......                     .#        .(*/*........(......(    , %',$0d,$0A
+                dc.b    '%          ,     ....                      ,(,  ,       #..*//./..........% #. %',$0d,$0A
+                dc.b    '%                /...                            *     *.,..............*(*... %',$0d,$0A
+                dc.b    '%                (*...#                              *,..(*(*.....*........... %',$0d,$0A
+                dc.b    '%                #......                     /       (...*........*........*.. %',$0d,$0A
+                dc.b    '%                 */.*..(            ./            (.................**,**.... %',$0d,$0A
+                dc.b    '%              .    .(.... *( (             .    ...........................*. %',$0d,$0A
+                dc.b    '%                   *@....,                 .......................#(*........ %',$0d,$0A
+                dc.b    '%             (.* (%* .,..(             ,%(**.............(................... %',$0d,$0A
+                dc.b    '%            (         , ..        #*.....................*.........         ( %',$0d,$0A
+                dc.b    '%                        ( .*...,..,,.........#(.*.................. .,,    ,( %',$0d,$0A
+                dc.b    '%,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,%',$0d,$0A
+                dc.b    '                   Pick your starting point: 1. Iraq 2. Iran 3. Syria           ',$0d,$0A
                 dc.b    '',0
                 dc.b    $0D,$0A,0  
 Iraq_msg:       dc.b    'Welcome to the to the nation of Iraq,'   
@@ -559,6 +596,7 @@ health:     ds.w    1   Players Health
 score:      ds.w    1   Reserve space for score
 
     end start
+
 
 
 
